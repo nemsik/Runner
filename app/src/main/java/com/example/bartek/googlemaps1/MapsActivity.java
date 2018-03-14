@@ -118,17 +118,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG, "onReceive: ");
-                user = userDao.getUser();
-                drawRoute(user.getLatitude(), user.getLongitude());
-                double distance = user.getDistance();
-                distance/=1000;
-                textViewDistance.setText(String.format("%.2f",distance));
-                userSpeedsList = user.getSpeed();
-
-                userSpeed = userSpeedsList.get(userSpeedsList.size()-1);
-                userRate = 60/userSpeed;
-                textViewRate.setText(String.format("%.2f", userRate));
-
+                setUi();
             }
         };
 
@@ -221,8 +211,17 @@ public class MapsActivity extends FragmentActivity implements
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
     }
 
-    private void setUi(double distance){
+    private void setUi(){
+        user = userDao.getUser();
+        drawRoute(user.getLatitude(), user.getLongitude());
+        double distance = user.getDistance();
+        distance/=1000;
         textViewDistance.setText(String.format("%.2f",distance));
+        userSpeedsList = user.getSpeed();
+
+        userSpeed = userSpeedsList.get(userSpeedsList.size()-1);
+        userRate = 60/userSpeed;
+        textViewRate.setText(String.format("%.2f", userRate));
     }
 
 
