@@ -162,11 +162,9 @@ public class MapsActivity extends FragmentActivity implements
 
 
     private void drawRoute(ArrayList<Double> latitude, ArrayList<Double> longitude){
-        mMap.clear();
-        for(int i=0; i<latitude.size(); i++){
-            latLng = new LatLng(latitude.get(i), longitude.get(i));
+        int size = latitude.size();
+            latLng = new LatLng(latitude.get(size-1), longitude.get(size-1));
             rectOptions.add(latLng);
-        }
 
         mMap.addPolyline(rectOptions);
     }
