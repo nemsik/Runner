@@ -31,8 +31,15 @@ public class User {
     @ColumnInfo(name = "spped")
     private ArrayList<Double> speed = new ArrayList<>();
 
+    @ColumnInfo(name = "distance")
+    private double distance = 0;
+
     @ColumnInfo(name = "kcal")
     private double kcal = 0;
+
+    public void addDistance(double distance){
+        this.distance+=distance;
+    }
 
     public void addKcal(double kcal){
         this.kcal+=kcal;
@@ -112,5 +119,13 @@ public class User {
 
     public double getLastLongitude(){
         return latitude.get(longitude.size()-1);
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
     }
 }

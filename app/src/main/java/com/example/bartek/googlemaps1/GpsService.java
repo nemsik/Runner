@@ -10,6 +10,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -31,7 +32,6 @@ public class GpsService extends Service {
     private static final float LOCATION_DISTANCE = 10f;
     private UserDao userDao;
     private User user;
-    private long date;
     private Intent intent;
     private double speed;
 
@@ -53,7 +53,7 @@ public class GpsService extends Service {
                 speed = location.getSpeed();
                 speed *= 3.6;
                 user.addSpeed(speed);
-                user.setEnd_time(date = Calendar.getInstance().getTimeInMillis());
+                user.setEnd_time(SystemClock.uptimeMillis());
                 userDao.update(user);
                 sendBroadcast(intent);
             }

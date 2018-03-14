@@ -13,6 +13,8 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -22,6 +24,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.example.bartek.googlemaps1.Database.AppDatabase;
 import com.example.bartek.googlemaps1.Database.User;
@@ -53,10 +56,15 @@ public class MapsActivity extends FragmentActivity implements
     public static final String SharedRunnerIsStarted = "runnerisStarted";
 
     private Button bStartStop;
+    private TextView textViewTime, textViewDistance, textViewKcal, textViewRate;
 
     private User user;
     private UserDao userDao;
     private List<User> users;
+
+    private long startTimeRunner;
+
+    private Handler handler = new Handler();
 
     private boolean permissionGranted, runnerisStarted = false;
     private GoogleMap mMap;
@@ -82,6 +90,10 @@ public class MapsActivity extends FragmentActivity implements
         setContentView(R.layout.activity_main);
 
         bStartStop = (Button) findViewById(R.id.buttonStartStop);
+        textViewDistance = (TextView) findViewById(R.id.textViewDistance);
+        textViewKcal = (TextView) findViewById(R.id.textViewKcal);
+        textViewRate = (TextView) findViewById(R.id.textViewRate);
+        textViewTime = (TextView) findViewById(R.id.textViewTime);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment);
@@ -101,6 +113,7 @@ public class MapsActivity extends FragmentActivity implements
                 Log.d(TAG, "onReceive: ");
                 user = userDao.getUser();
                 drawRoute(user.getLatitude(), user.getLongitude());
+                textViewDistance.setText(user.getDistance()+"");
             }
         };
 
@@ -118,6 +131,7 @@ public class MapsActivity extends FragmentActivity implements
                     runnerisStarted = false;
                     appLog();
                     mMap.clear();
+                    handler.removeCallbacks(runnable);
                 }
             }
         });
@@ -152,10 +166,14 @@ public class MapsActivity extends FragmentActivity implements
         runnerisStarted = true;
         bStartStop.setText("Stop");
         user = new User();
-        user.setStart_time(Calendar.getInstance().getTimeInMillis());
+        user.setStart_time(SystemClock.uptimeMillis());
         userDao.insert(user);
         startService(gpsService);
         registerReceiver(broadcastReceiver, intentFilter);
+
+        startTimeRunner = user.getStart_time();
+        handler.postDelayed(runnable, 1000);
+
     }
 
     private void continueRunner() {
@@ -172,6 +190,10 @@ public class MapsActivity extends FragmentActivity implements
         //mMap.addPolyline(rectOptions);
         startService(gpsService);
         registerReceiver(broadcastReceiver, intentFilter);
+
+        startTimeRunner = user.getStart_time();
+        handler.postDelayed(runnable, 1000);
+
     }
 
 
@@ -187,6 +209,21 @@ public class MapsActivity extends FragmentActivity implements
     private void setUi(){
 
     }
+
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            long milisecondTime = SystemClock.uptimeMillis() - startTimeRunner;
+            int seconds = (int) (milisecondTime/1000);
+            int minutes = seconds / 60;
+            int hours = minutes / 60;
+            seconds%=60;
+            minutes%=60;
+            hours%=60;
+            textViewTime.setText(String.format("%02d",hours)+":"+String.format("%02d",minutes)+":"+String.format("%02d",seconds));
+            handler.postDelayed(this, 1000);
+        }
+    };
 
     private void appLog() {
         users = userDao.getAll();
@@ -235,7 +272,10 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     protected void onPause() {
         super.onPause();
-        if (runnerisStarted) unregisterReceiver(broadcastReceiver);
+        if (runnerisStarted){
+            unregisterReceiver(broadcastReceiver);
+            handler.removeCallbacks(runnable);
+        }
         saveState();
         Log.d(TAG, "onPause: ");
     }
