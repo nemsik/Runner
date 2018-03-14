@@ -19,6 +19,7 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 
 import com.example.bartek.googlemaps1.Database.AppDatabase;
@@ -36,6 +37,7 @@ import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -56,6 +58,7 @@ public class MapsActivity extends FragmentActivity implements
     private boolean permissionGranted, ruunerisStarted=false;
     private GoogleMap mMap;
     private PolylineOptions rectOptions;
+    private LatLng latLng;
 
     BroadcastReceiver broadcastReceiver;
     IntentFilter intentFilter;
@@ -91,6 +94,8 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG, "onReceive: ");
+                user = userDao.getUser();
+                drawRoute(user.getLatitude(), user.getLongitude());
             }
         };
 
@@ -155,6 +160,17 @@ public class MapsActivity extends FragmentActivity implements
         registerReceiver(broadcastReceiver, intentFilter);
     }
 
+
+    private void drawRoute(ArrayList<Double> latitude, ArrayList<Double> longitude){
+        mMap.clear();
+        for(int i=0; i<latitude.size(); i++){
+            latLng = new LatLng(latitude.get(i), longitude.get(i));
+            rectOptions.add(latLng);
+        }
+
+        mMap.addPolyline(rectOptions);
+    }
+
     private void appLog(){
         users = userDao.getAll();
         Log.d(TAG, ""+users.size());
@@ -183,4 +199,9 @@ public class MapsActivity extends FragmentActivity implements
         Log.d(TAG, "onMyLocationButtonClick:  elo");
     }
 
+    @Override
+    protected void onPause() {
+        if(ruunerisStarted) unregisterReceiver(broadcastReceiver);
+        super.onPause();
+    }
 }

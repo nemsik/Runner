@@ -105,4 +105,12 @@ public class User {
     public void setSpeed(ArrayList<Double> speed) {
         this.speed = speed;
     }
+
+    public double getLastLatitude(){
+        return latitude.get(latitude.size()-1);
+    }
+
+    public double getLastLongitude(){
+        return latitude.get(longitude.size()-1);
+    }
 }
