@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -44,10 +45,12 @@ import java.util.List;
 public class MapsActivity extends FragmentActivity implements
         GoogleMap.OnMyLocationButtonClickListener,
         GoogleMap.OnMyLocationClickListener,
-        OnMapReadyCallback{
+        OnMapReadyCallback {
 
     public static final String TAG = "MapsActivity";
     public static final String Filter = "GpsIntentFilter";
+    public static final String SharedTag = "SharedPreferencesRunner";
+    public static final String SharedRunnerIsStarted = "runnerisStarted";
 
     private Button bStartStop;
 
@@ -55,10 +58,13 @@ public class MapsActivity extends FragmentActivity implements
     private UserDao userDao;
     private List<User> users;
 
-    private boolean permissionGranted, ruunerisStarted=false;
+    private boolean permissionGranted, runnerisStarted = false;
     private GoogleMap mMap;
     private PolylineOptions rectOptions;
     private LatLng latLng;
+
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
 
     BroadcastReceiver broadcastReceiver;
     IntentFilter intentFilter;
@@ -75,7 +81,7 @@ public class MapsActivity extends FragmentActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        bStartStop = (Button)findViewById(R.id.buttonStartStop) ;
+        bStartStop = (Button) findViewById(R.id.buttonStartStop);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -104,31 +110,19 @@ public class MapsActivity extends FragmentActivity implements
         bStartStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!ruunerisStarted)
+                if (!runnerisStarted)
                     startRunner();
                 else {
                     bStartStop.setText("Start");
                     unregisterReceiver(broadcastReceiver);
                     stopService(gpsService);
-                    ruunerisStarted = false;
+                    runnerisStarted = false;
                     appLog();
                 }
             }
         });
-
-
     }
 
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -137,11 +131,11 @@ public class MapsActivity extends FragmentActivity implements
         LatLng sydney = new LatLng(37.35, -122.0);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-        if(checkPermissions()) mMap.setMyLocationEnabled(true);
+        if (checkPermissions()) mMap.setMyLocationEnabled(true);
 
     }
 
-    private boolean checkPermissions(){
+    private boolean checkPermissions() {
         permissionGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED;
         if (!permissionGranted)
@@ -149,9 +143,9 @@ public class MapsActivity extends FragmentActivity implements
         return permissionGranted;
     }
 
-    private void startRunner(){
-        if(!permissionGranted) return;
-        ruunerisStarted = true;
+    private void startRunner() {
+        if (!permissionGranted) return;
+        runnerisStarted = true;
         bStartStop.setText("Stop");
         user = new User();
         user.setStart_time(Calendar.getInstance().getTimeInMillis());
@@ -160,23 +154,34 @@ public class MapsActivity extends FragmentActivity implements
         registerReceiver(broadcastReceiver, intentFilter);
     }
 
+    private void continueRunner() {
+        if (!permissionGranted) return;
+        runnerisStarted = true;
+        bStartStop.setText("Stop");
+        user = new User();
+        user = userDao.getUser();
+        startService(gpsService);
+        registerReceiver(broadcastReceiver, intentFilter);
+    }
 
-    private void drawRoute(ArrayList<Double> latitude, ArrayList<Double> longitude){
+
+    private void drawRoute(ArrayList<Double> latitude, ArrayList<Double> longitude) {
         int size = latitude.size();
-            latLng = new LatLng(latitude.get(size-1), longitude.get(size-1));
-            rectOptions.add(latLng);
+        latLng = new LatLng(latitude.get(size - 1), longitude.get(size - 1));
+        rectOptions.add(latLng);
 
         mMap.addPolyline(rectOptions);
     }
 
-    private void appLog(){
+    private void appLog() {
         users = userDao.getAll();
-        Log.d(TAG, ""+users.size());
+        Log.d(TAG, "" + users.size());
         for (int i = 0; i < users.size(); i++) {
             StringBuilder stringBuilder = new StringBuilder();
             double speed = 0.0;
-            for(int j=0; j<users.get(i).getSpeed().size(); j++) speed+=users.get(i).getSpeed().get(j);
-            speed/=users.get(i).getSpeed().size();
+            for (int j = 0; j < users.get(i).getSpeed().size(); j++)
+                speed += users.get(i).getSpeed().get(j);
+            speed /= users.get(i).getSpeed().size();
             stringBuilder.append(users.get(i).getId()).append(" ");
             stringBuilder.append(users.get(i).getStart_time()).append(" ");
             stringBuilder.append(users.get(i).getEnd_time()).append("\n");
@@ -186,6 +191,21 @@ public class MapsActivity extends FragmentActivity implements
             Log.d(TAG, stringBuilder.toString());
         }
     }
+
+    private void saveState() {
+        sharedPreferences = getSharedPreferences(SharedTag, Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        editor.putBoolean(SharedRunnerIsStarted, runnerisStarted);
+        editor.commit();
+    }
+
+    private void loadState() {
+        sharedPreferences = getSharedPreferences(SharedTag, Context.MODE_PRIVATE);
+        runnerisStarted = sharedPreferences.getBoolean(SharedRunnerIsStarted, false);
+        Log.d(TAG, "loadState: " + runnerisStarted);
+        if (runnerisStarted) continueRunner();
+    }
+
     @Override
     public boolean onMyLocationButtonClick() {
         Log.d(TAG, "onMyLocationButtonClick: ");
@@ -199,7 +219,16 @@ public class MapsActivity extends FragmentActivity implements
 
     @Override
     protected void onPause() {
-        if(ruunerisStarted) unregisterReceiver(broadcastReceiver);
         super.onPause();
+        if (runnerisStarted) unregisterReceiver(broadcastReceiver);
+        saveState();
+        Log.d(TAG, "onPause: ");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadState();
+        Log.d(TAG, "onResume: ");
     }
 }
