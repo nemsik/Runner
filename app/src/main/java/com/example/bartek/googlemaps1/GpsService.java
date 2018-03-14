@@ -41,11 +41,13 @@ public class GpsService extends Service {
         public LocationListener(String provider) {
             Log.e(TAG, "LocationListener " + provider);
             mLastLocation = new Location(provider);
+            Log.e(TAG, "LocationListener: " + mLastLocation );
         }
 
         @Override
         public void onLocationChanged(Location location) {
             Log.e(TAG, "onLocationChanged: " + location);
+            if(mLastLocation.getLongitude()!=0 && mLastLocation.getLongitude()!=0) user.addDistance(mLastLocation.distanceTo(location));
             mLastLocation.set(location);
             if (location != null) {
                 user.addLatitude(location.getLatitude());

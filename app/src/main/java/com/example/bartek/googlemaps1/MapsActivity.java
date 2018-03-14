@@ -62,7 +62,14 @@ public class MapsActivity extends FragmentActivity implements
     private UserDao userDao;
     private List<User> users;
 
-    private long startTimeRunner;
+    private long userStartTime;
+    private ArrayList<Double> userSpeedsList = new ArrayList<>();
+    private double userSpeed = 0;
+    private double userRate = 0;
+    private double userKcal = 0;
+
+    private double userKg = 70;
+
 
     private Handler handler = new Handler();
 
@@ -113,7 +120,15 @@ public class MapsActivity extends FragmentActivity implements
                 Log.d(TAG, "onReceive: ");
                 user = userDao.getUser();
                 drawRoute(user.getLatitude(), user.getLongitude());
-                textViewDistance.setText(user.getDistance()+"");
+                double distance = user.getDistance();
+                distance/=1000;
+                textViewDistance.setText(String.format("%.2f",distance));
+                userSpeedsList = user.getSpeed();
+
+                userSpeed = userSpeedsList.get(userSpeedsList.size()-1);
+                userRate = 60/userSpeed;
+                textViewRate.setText(String.format("%.2f", userRate));
+
             }
         };
 
@@ -171,7 +186,7 @@ public class MapsActivity extends FragmentActivity implements
         startService(gpsService);
         registerReceiver(broadcastReceiver, intentFilter);
 
-        startTimeRunner = user.getStart_time();
+        userStartTime = user.getStart_time();
         handler.postDelayed(runnable, 1000);
 
     }
@@ -191,7 +206,7 @@ public class MapsActivity extends FragmentActivity implements
         startService(gpsService);
         registerReceiver(broadcastReceiver, intentFilter);
 
-        startTimeRunner = user.getStart_time();
+        userStartTime = user.getStart_time();
         handler.postDelayed(runnable, 1000);
 
     }
@@ -206,14 +221,15 @@ public class MapsActivity extends FragmentActivity implements
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
     }
 
-    private void setUi(){
-
+    private void setUi(double distance){
+        textViewDistance.setText(String.format("%.2f",distance));
     }
+
 
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            long milisecondTime = SystemClock.uptimeMillis() - startTimeRunner;
+            long milisecondTime = SystemClock.uptimeMillis() - userStartTime;
             int seconds = (int) (milisecondTime/1000);
             int minutes = seconds / 60;
             int hours = minutes / 60;
