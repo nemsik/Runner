@@ -83,7 +83,6 @@ public class MapsActivity extends FragmentActivity implements
 
         bStartStop = (Button) findViewById(R.id.buttonStartStop);
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment);
         mapFragment.getMapAsync(this);
@@ -118,6 +117,7 @@ public class MapsActivity extends FragmentActivity implements
                     stopService(gpsService);
                     runnerisStarted = false;
                     appLog();
+                    mMap.clear();
                 }
             }
         });
@@ -125,12 +125,11 @@ public class MapsActivity extends FragmentActivity implements
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        checkPermissions();
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(37.35, -122.0);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        LatLng uniLodz = new LatLng(51.7770423,19.48356);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(uniLodz));
         if (checkPermissions()) mMap.setMyLocationEnabled(true);
 
     }
@@ -138,8 +137,13 @@ public class MapsActivity extends FragmentActivity implements
     private boolean checkPermissions() {
         permissionGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED;
-        if (!permissionGranted)
+        if (!permissionGranted) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 200);
+            permissionGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED;
+        }
+        permissionGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
         return permissionGranted;
     }
 
@@ -160,6 +164,12 @@ public class MapsActivity extends FragmentActivity implements
         bStartStop.setText("Stop");
         user = new User();
         user = userDao.getUser();
+        rectOptions = new PolylineOptions();
+        for(int i=0; i<user.getLatitude().size()-1; i++){
+            latLng = new LatLng(user.getLatitude().get(i), user.getLongitude().get(i));
+            rectOptions.add(latLng);
+        }
+        //mMap.addPolyline(rectOptions);
         startService(gpsService);
         registerReceiver(broadcastReceiver, intentFilter);
     }
@@ -171,6 +181,11 @@ public class MapsActivity extends FragmentActivity implements
         rectOptions.add(latLng);
 
         mMap.addPolyline(rectOptions);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+    }
+
+    private void setUi(){
+
     }
 
     private void appLog() {
