@@ -126,6 +126,15 @@
             android:padding="10dp"
             android:layout_marginBottom="20dp"/>
 
+        <Button
+            android:id="@+id/buttonHistory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right|bottom"
+            android:text="History"
+            android:padding="10dp"
+            android:layout_marginBottom="20dp"/>
+
     </fragment>
 
 

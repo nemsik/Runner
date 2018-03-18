@@ -57,7 +57,7 @@ public class MapsActivity extends FragmentActivity implements
     public static final String SharedTag = "SharedPreferencesRunner";
     public static final String SharedRunnerIsStarted = "runnerisStarted";
     public static final String statusTAG = "LocationStatus";
-    private Button bStartStop;
+    private Button bStartStop, bHistory;
     private TextView textViewTime, textViewDistance, textViewKcal, textViewRate;
     private User user;
     private UserDao userDao;
@@ -83,6 +83,7 @@ public class MapsActivity extends FragmentActivity implements
         setContentView(R.layout.activity_main);
 
         bStartStop = (Button) findViewById(R.id.buttonStartStop);
+        bHistory = (Button) findViewById(R.id.buttonHistory);
         textViewDistance = (TextView) findViewById(R.id.textViewDistance);
         textViewKcal = (TextView) findViewById(R.id.textViewKcal);
         textViewRate = (TextView) findViewById(R.id.textViewRate);
@@ -103,6 +104,8 @@ public class MapsActivity extends FragmentActivity implements
 
         rectOptions = new PolylineOptions();
 
+        historyIntent = new Intent(this, HistoryActivity.class);
+
         bStartStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -112,10 +115,13 @@ public class MapsActivity extends FragmentActivity implements
             }
         });
 
-        historyIntent = new Intent(this, HistoryActivity.class);
-
+        bHistory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(historyIntent);
+            }
+        });
         handler = new Handler();
-
         loadState();
     }
 
