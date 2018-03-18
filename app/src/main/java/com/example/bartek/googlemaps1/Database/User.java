@@ -114,11 +114,13 @@ public class User {
     }
 
     public double getLastLatitude(){
-        return latitude.get(latitude.size()-1);
+        double last = latitude.get(latitude.size()-1);
+        return last;
     }
 
     public double getLastLongitude(){
-        return latitude.get(longitude.size()-1);
+        double last = longitude.get(longitude.size()-1);
+        return last;
     }
 
     public double getDistance() {

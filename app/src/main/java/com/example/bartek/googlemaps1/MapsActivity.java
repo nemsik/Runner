@@ -14,6 +14,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -43,6 +44,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements
@@ -70,8 +72,10 @@ public class MapsActivity extends FragmentActivity implements
 
     private double userKg = 70;
 
+    private Calendar calendar;
 
-    private Handler handler = new Handler();
+
+    private Handler handler;
 
     private boolean permissionGranted, runnerisStarted = false;
     private GoogleMap mMap;
@@ -84,6 +88,7 @@ public class MapsActivity extends FragmentActivity implements
     BroadcastReceiver broadcastReceiver;
     IntentFilter intentFilter;
     Intent gpsService;
+    Intent historyIntent;
 
 
     /**
@@ -118,7 +123,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void onReceive(Context context, Intent intent) {
                 Log.d(TAG, "onReceive: ");
-                setUi();
+                setGUI();
             }
         };
 
@@ -137,9 +142,14 @@ public class MapsActivity extends FragmentActivity implements
                     appLog();
                     mMap.clear();
                     handler.removeCallbacks(runnable);
+                    //startActivity(historyIntent);
                 }
             }
         });
+
+        historyIntent = new Intent(this, HistoryActivity.class);
+
+        handler = new Handler();
     }
 
     @Override
@@ -171,7 +181,9 @@ public class MapsActivity extends FragmentActivity implements
         runnerisStarted = true;
         bStartStop.setText("Stop");
         user = new User();
-        user.setStart_time(SystemClock.uptimeMillis());
+        calendar = Calendar.getInstance();
+        userStartTime = calendar.getTimeInMillis();
+        user.setStart_time(userStartTime);
         userDao.insert(user);
         startService(gpsService);
         registerReceiver(broadcastReceiver, intentFilter);
@@ -193,7 +205,7 @@ public class MapsActivity extends FragmentActivity implements
             rectOptions.add(latLng);
         }
         //mMap.addPolyline(rectOptions);
-        startService(gpsService);
+        //startService(gpsService);
         registerReceiver(broadcastReceiver, intentFilter);
 
         userStartTime = user.getStart_time();
@@ -202,18 +214,17 @@ public class MapsActivity extends FragmentActivity implements
     }
 
 
-    private void drawRoute(ArrayList<Double> latitude, ArrayList<Double> longitude) {
-        int size = latitude.size();
-        latLng = new LatLng(latitude.get(size - 1), longitude.get(size - 1));
+    private void drawRoute(double latitude, double longitude) {
+        latLng = new LatLng(latitude, longitude);
         rectOptions.add(latLng);
 
         mMap.addPolyline(rectOptions);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
     }
 
-    private void setUi(){
+    private void setGUI(){
         user = userDao.getUser();
-        drawRoute(user.getLatitude(), user.getLongitude());
+        drawRoute(user.getLastLatitude(), user.getLastLongitude());
         double distance = user.getDistance();
         distance/=1000;
         textViewDistance.setText(String.format("%.2f",distance));
@@ -228,8 +239,10 @@ public class MapsActivity extends FragmentActivity implements
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            long milisecondTime = SystemClock.uptimeMillis() - userStartTime;
+            calendar = Calendar.getInstance();
+            long milisecondTime = calendar.getTimeInMillis() - userStartTime;
             int seconds = (int) (milisecondTime/1000);
+            Log.d(TAG, "run: " + milisecondTime);
             int minutes = seconds / 60;
             int hours = minutes / 60;
             seconds%=60;

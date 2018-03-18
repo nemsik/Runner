@@ -39,7 +39,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".GpsService" android:process=":my_service" />
+
+        <service
+            android:name=".GpsService"
+            android:process=":my_service" />
+
+        <activity android:name=".HistoryActivity"></activity>
     </application>
 
 </manifest>

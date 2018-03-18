@@ -55,7 +55,7 @@ public class GpsService extends Service {
                 speed = location.getSpeed();
                 speed *= 3.6;
                 user.addSpeed(speed);
-                user.setEnd_time(SystemClock.uptimeMillis());
+                user.setEnd_time(Calendar.getInstance().getTimeInMillis());
                 userDao.update(user);
                 sendBroadcast(intent);
             }
