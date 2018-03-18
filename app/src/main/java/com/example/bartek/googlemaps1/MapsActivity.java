@@ -56,45 +56,26 @@ public class MapsActivity extends FragmentActivity implements
     public static final String Filter = "GpsIntentFilter";
     public static final String SharedTag = "SharedPreferencesRunner";
     public static final String SharedRunnerIsStarted = "runnerisStarted";
-
+    public static final String statusTAG = "LocationStatus";
     private Button bStartStop;
     private TextView textViewTime, textViewDistance, textViewKcal, textViewRate;
-
     private User user;
     private UserDao userDao;
     private List<User> users;
-
     private long userStartTime;
     private ArrayList<Double> userSpeedsList = new ArrayList<>();
     private double userSpeed = 0;
     private double userRate = 0;
-    private double userKcal = 0;
-
-    private double userKg = 70;
-
     private Calendar calendar;
-
-
     private Handler handler;
-
     private boolean permissionGranted, runnerisStarted = false;
     private GoogleMap mMap;
     private PolylineOptions rectOptions;
     private LatLng latLng;
-
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
-
-    BroadcastReceiver broadcastReceiver;
-    IntentFilter intentFilter;
-    Intent gpsService;
-    Intent historyIntent;
-
-
-    /**
-     * Flag indicating whether a requested permission has been denied after returning in
-     * {@link #onRequestPermissionsResult(int, String[], int[])}.
-     */
+    private IntentFilter intentFilter;
+    private Intent gpsService, historyIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,25 +88,18 @@ public class MapsActivity extends FragmentActivity implements
         textViewRate = (TextView) findViewById(R.id.textViewRate);
         textViewTime = (TextView) findViewById(R.id.textViewTime);
 
+        checkPermissions();
+
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment);
         mapFragment.getMapAsync(this);
-        checkPermissions();
 
         AppDatabase db = Room.databaseBuilder(getApplicationContext(),
                 AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
-
         userDao = db.userDao();
 
         intentFilter = new IntentFilter(Filter);
         gpsService = new Intent(this, GpsService.class);
-        broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                Log.d(TAG, "onReceive: ");
-                setGUI();
-            }
-        };
 
         rectOptions = new PolylineOptions();
 
@@ -134,22 +108,15 @@ public class MapsActivity extends FragmentActivity implements
             public void onClick(View view) {
                 if (!runnerisStarted)
                     startRunner();
-                else {
-                    bStartStop.setText("Start");
-                    unregisterReceiver(broadcastReceiver);
-                    stopService(gpsService);
-                    runnerisStarted = false;
-                    appLog();
-                    mMap.clear();
-                    handler.removeCallbacks(runnable);
-                    //startActivity(historyIntent);
-                }
+                else stopRunner();
             }
         });
 
         historyIntent = new Intent(this, HistoryActivity.class);
 
         handler = new Handler();
+
+        loadState();
     }
 
     @Override
@@ -171,8 +138,6 @@ public class MapsActivity extends FragmentActivity implements
             permissionGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED;
         }
-        permissionGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED;
         return permissionGranted;
     }
 
@@ -185,12 +150,22 @@ public class MapsActivity extends FragmentActivity implements
         userStartTime = calendar.getTimeInMillis();
         user.setStart_time(userStartTime);
         userDao.insert(user);
-        startService(gpsService);
         registerReceiver(broadcastReceiver, intentFilter);
-
+        startService(gpsService);
         userStartTime = user.getStart_time();
         handler.postDelayed(runnable, 1000);
 
+    }
+
+    private void stopRunner(){
+        bStartStop.setText("Start");
+        unregisterReceiver(broadcastReceiver);
+        stopService(gpsService);
+        runnerisStarted = false;
+        appLog();
+        mMap.clear();
+        handler.removeCallbacks(runnable);
+        //startActivity(historyIntent);
     }
 
     private void continueRunner() {
@@ -205,7 +180,7 @@ public class MapsActivity extends FragmentActivity implements
             rectOptions.add(latLng);
         }
         //mMap.addPolyline(rectOptions);
-        //startService(gpsService);
+        if(!isMyServiceRunning(GpsService.class)) startService(gpsService);
         registerReceiver(broadcastReceiver, intentFilter);
 
         userStartTime = user.getStart_time();
@@ -217,7 +192,6 @@ public class MapsActivity extends FragmentActivity implements
     private void drawRoute(double latitude, double longitude) {
         latLng = new LatLng(latitude, longitude);
         rectOptions.add(latLng);
-
         mMap.addPolyline(rectOptions);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
     }
@@ -253,6 +227,65 @@ public class MapsActivity extends FragmentActivity implements
         }
     };
 
+
+    private void saveState() {
+        sharedPreferences = getSharedPreferences(SharedTag, Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        editor.putBoolean(SharedRunnerIsStarted, runnerisStarted);
+        editor.commit();
+    }
+
+    private void loadState() {
+        sharedPreferences = getSharedPreferences(SharedTag, Context.MODE_PRIVATE);
+        runnerisStarted = sharedPreferences.getBoolean(SharedRunnerIsStarted, false);
+        Log.d(TAG, "loadState: " + runnerisStarted);
+        if (runnerisStarted) continueRunner();
+    }
+
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "onReceive: " + intent.getIntExtra(statusTAG, 10));
+            if(intent.getIntExtra(statusTAG, 0) == 0){
+                Log.d(TAG, "onReceive:  LOCATION IS DISABLED");
+                stopRunner();
+            }
+            try {
+                setGUI();
+            }catch (Exception e){
+                Log.i(TAG, "SetGUI err");
+            }
+        }
+    };
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (runnerisStarted){
+            unregisterReceiver(broadcastReceiver);
+            handler.removeCallbacks(runnable);
+        }
+        saveState();
+        Log.d(TAG, "onPause: ");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadState();
+        Log.d(TAG, "onResume: ");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.i(TAG, "onDestroy: ");
+        sharedPreferences = getSharedPreferences(SharedTag, Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        editor.putBoolean(SharedRunnerIsStarted, false);
+        editor.commit();
+    }
+
     private void appLog() {
         users = userDao.getAll();
         Log.d(TAG, "" + users.size());
@@ -272,46 +305,23 @@ public class MapsActivity extends FragmentActivity implements
         }
     }
 
-    private void saveState() {
-        sharedPreferences = getSharedPreferences(SharedTag, Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
-        editor.putBoolean(SharedRunnerIsStarted, runnerisStarted);
-        editor.commit();
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    private void loadState() {
-        sharedPreferences = getSharedPreferences(SharedTag, Context.MODE_PRIVATE);
-        runnerisStarted = sharedPreferences.getBoolean(SharedRunnerIsStarted, false);
-        Log.d(TAG, "loadState: " + runnerisStarted);
-        if (runnerisStarted) continueRunner();
-    }
 
     @Override
     public boolean onMyLocationButtonClick() {
-        Log.d(TAG, "onMyLocationButtonClick: ");
         return false;
     }
 
     @Override
     public void onMyLocationClick(@NonNull Location location) {
-        Log.d(TAG, "onMyLocationButtonClick:  elo");
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (runnerisStarted){
-            unregisterReceiver(broadcastReceiver);
-            handler.removeCallbacks(runnable);
-        }
-        saveState();
-        Log.d(TAG, "onPause: ");
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadState();
-        Log.d(TAG, "onResume: ");
     }
 }

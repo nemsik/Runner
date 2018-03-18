@@ -9,6 +9,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.support.annotation.Nullable;
@@ -20,6 +21,7 @@ import com.example.bartek.googlemaps1.Database.UserDao;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by bartek on 14.03.2018.
@@ -35,19 +37,26 @@ public class GpsService extends Service {
     private Intent intent;
     private double speed;
 
+    private int status = 0;
+
+    private boolean isGpsEnabled = false, isNetworkEnabled = false;
+
+
+    private Location mLastLocation;
+
     private class LocationListener implements android.location.LocationListener {
-        Location mLastLocation;
 
         public LocationListener(String provider) {
             Log.e(TAG, "LocationListener " + provider);
             mLastLocation = new Location(provider);
-            Log.e(TAG, "LocationListener: " + mLastLocation );
+            Log.e(TAG, "LocationListener: " + mLastLocation);
         }
 
         @Override
         public void onLocationChanged(Location location) {
             Log.e(TAG, "onLocationChanged: " + location);
-            if(mLastLocation.getLongitude()!=0 && mLastLocation.getLongitude()!=0) user.addDistance(mLastLocation.distanceTo(location));
+            if (mLastLocation.getLongitude() != 0 && mLastLocation.getLongitude() != 0)
+                user.addDistance(mLastLocation.distanceTo(location));
             mLastLocation.set(location);
             if (location != null) {
                 user.addLatitude(location.getLatitude());
@@ -64,6 +73,10 @@ public class GpsService extends Service {
         @Override
         public void onProviderDisabled(String provider) {
             Log.e(TAG, "onProviderDisabled: " + provider);
+            checkStatus();
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra(MapsActivity.statusTAG, status);
+            sendBroadcast(intent);
         }
 
         @Override
@@ -120,11 +133,33 @@ public class GpsService extends Service {
             Log.d(TAG, "gps provider does not exist " + ex.getMessage());
         }
 
+        checkStatus();
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(MapsActivity.statusTAG, status);
+        sendBroadcast(intent);
+
         AppDatabase db = Room.databaseBuilder(getApplicationContext(),
                 AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
         userDao = db.userDao();
         user = userDao.getUser();
     }
+
+    private int checkStatus() {
+        isGpsEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        isNetworkEnabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        Log.i(TAG, "GPS ENABLED: " + isGpsEnabled);
+        Log.i(TAG, "NETWORK ENABLED " + isNetworkEnabled);
+
+        if (!isGpsEnabled && !isNetworkEnabled) {
+            status = 0;
+        } else if (!isGpsEnabled & isNetworkEnabled) {
+            status = 1;
+        } else if (isGpsEnabled) {
+            status = 2;
+        }
+        return status;
+    }
+
 
     @Override
     public void onDestroy() {
