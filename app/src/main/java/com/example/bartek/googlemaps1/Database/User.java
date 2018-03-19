@@ -37,12 +37,12 @@ public class User {
     @ColumnInfo(name = "kcal")
     private double kcal = 0;
 
-    public void addDistance(double distance){
-        this.distance+=distance;
+    public void addDistance(double distance) {
+        this.distance += distance;
     }
 
-    public void addKcal(double kcal){
-        this.kcal+=kcal;
+    public void addKcal(double kcal) {
+        this.kcal += kcal;
     }
 
     public double getKcal() {
@@ -77,7 +77,7 @@ public class User {
         return longitude;
     }
 
-    public void addSpeed(double speed){
+    public void addSpeed(double speed) {
         this.speed.add(speed);
     }
 
@@ -113,14 +113,16 @@ public class User {
         this.speed = speed;
     }
 
-    public double getLastLatitude(){
-        double last = latitude.get(latitude.size()-1);
-        return last;
+    public double getLastLatitude() {
+        return latitude.get(latitude.size() - 1);
     }
 
-    public double getLastLongitude(){
-        double last = longitude.get(longitude.size()-1);
-        return last;
+    public double getLastLongitude() {
+        return longitude.get(longitude.size() - 1);
+    }
+
+    public double getLastSpeed() {
+        return speed.get(speed.size() - 1);
     }
 
     public double getDistance() {

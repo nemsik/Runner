@@ -30,18 +30,14 @@ import java.util.Map;
 public class GpsService extends Service {
     private static final String TAG = "GpsService";
     private LocationManager mLocationManager = null;
-    private static final int LOCATION_INTERVAL = 1000;
+    private static final int LOCATION_INTERVAL = 3000;
     private static final float LOCATION_DISTANCE = 10f;
     private UserDao userDao;
     private User user;
     private Intent intent;
     private double speed;
-
     private int status = 0;
-
     private boolean isGpsEnabled = false, isNetworkEnabled = false;
-
-
     private Location mLastLocation;
 
     private class LocationListener implements android.location.LocationListener {
@@ -49,7 +45,6 @@ public class GpsService extends Service {
         public LocationListener(String provider) {
             Log.e(TAG, "LocationListener " + provider);
             mLastLocation = new Location(provider);
-            Log.e(TAG, "LocationListener: " + mLastLocation);
         }
 
         @Override
@@ -63,6 +58,7 @@ public class GpsService extends Service {
                 user.addLongitude(location.getLongitude());
                 speed = location.getSpeed();
                 speed *= 3.6;
+                Log.e(TAG, "onLocationChanged: " + speed );
                 user.addSpeed(speed);
                 user.setEnd_time(Calendar.getInstance().getTimeInMillis());
                 userDao.update(user);
@@ -110,9 +106,7 @@ public class GpsService extends Service {
     @Override
     public void onCreate() {
         Log.e(TAG, "onCreate");
-
         intent = new Intent().setAction(MapsActivity.Filter);
-
         initializeLocationManager();
         try {
             mLocationManager.requestLocationUpdates(
@@ -187,4 +181,5 @@ public class GpsService extends Service {
             mLocationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
         }
     }
+
 }
