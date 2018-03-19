@@ -67,7 +67,6 @@ public class MapsActivity extends FragmentActivity implements
     private long userStartTime = 0;
     private double userSpeed = 0, userRate = 0;
     private Handler handler = new Handler();
-    ;
     private boolean permissionGranted, runnerisStarted = false;
     private GoogleMap mMap;
     private PolylineOptions rectOptions;
@@ -91,30 +90,19 @@ public class MapsActivity extends FragmentActivity implements
         textViewRate = (TextView) findViewById(R.id.textViewRate);
         textViewTime = (TextView) findViewById(R.id.textViewTime);
 
-        manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment);
         mapFragment.getMapAsync(this);
         rectOptions = new PolylineOptions();
 
-        AppDatabase db = Room.databaseBuilder(getApplicationContext(),
-                AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
-        userDao = db.userDao();
-
-        gpsService = new Intent(this, GpsService.class);
-        historyIntent = new Intent(this, HistoryActivity.class);
-
         bStartStop.setOnClickListener(new bStartStopClick());
         bHistory.setOnClickListener(new bHistoryClick());
 
-        sharedPreferences = getSharedPreferences(SharedTag, Context.MODE_PRIVATE);
-        editor = sharedPreferences.edit();
-
+        initializeMapsActivity();
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.d(TAG, "onReceive: " + intent.getIntExtra(statusTAG, 10));
+                Log.d(TAG, "onReceive: " + intent.getIntExtra(statusTAG, 0));
                 if (intent.getIntExtra(statusTAG, 0) == 0) {
                     Log.d(TAG, "onReceive:  LOCATION IS DISABLED");
                     stopRunner();
@@ -126,6 +114,16 @@ public class MapsActivity extends FragmentActivity implements
                 }
             }
         };
+    }
+
+    private void initializeMapsActivity() {
+        AppDatabase db = Room.databaseBuilder(getApplicationContext(),
+                AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
+        userDao = db.userDao();
+        gpsService = new Intent(this, GpsService.class);
+        historyIntent = new Intent(this, HistoryActivity.class);
+        sharedPreferences = getSharedPreferences(SharedTag, Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
     }
 
     @Override
@@ -164,22 +162,29 @@ public class MapsActivity extends FragmentActivity implements
 
     private void stopRunner() {
         bStartStop.setText("Start");
-        try {
-            unregisterReceiver(broadcastReceiver);
-            stopService(gpsService);
-        } catch (Exception e) {
-            Log.i(TAG, "receiver is not registered");
-        }
         runnerisStarted = false;
         mMap.clear();
-        handler.removeCallbacks(runnable);
+        try {
+            unregisterReceiver(broadcastReceiver);
+        } catch (Exception e) {
+            Log.i(TAG, "can't unregister receiver");
+        }
+        try {
+            stopService(gpsService);
+        } catch (Exception e) {
+            Log.i(TAG, "can't stop gpsService");
+        }
+        try {
+            handler.removeCallbacks(runnable);
+        } catch (Exception e) {
+            Log.i(TAG, "can't remove callbacks");
+        }
         appLog();
         user = userDao.getUser();
         if (user.getLatitude().size() < 10) buildAlertMessageShortTrack();
     }
 
     private void continueRunner() {
-
         runnerisStarted = true;
         bStartStop.setText("Stop");
         user = new User();
@@ -317,7 +322,6 @@ public class MapsActivity extends FragmentActivity implements
         return false;
     }
 
-
     @Override
     public boolean onMyLocationButtonClick() {
         return false;
@@ -327,25 +331,7 @@ public class MapsActivity extends FragmentActivity implements
     public void onMyLocationClick(@NonNull Location location) {
     }
 
-    class bStartStopClick implements View.OnClickListener {
-        @Override
-        public void onClick(View view) {
-            if (!runnerisStarted) {
-                if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-                    buildAlertMessageNoGps();
-                else startRunner();
-            } else stopRunner();
-        }
-    }
-
-    class bHistoryClick implements View.OnClickListener {
-        @Override
-        public void onClick(View view) {
-            startActivity(historyIntent);
-        }
-    }
-
-    private void buildAlertMessageShortTrack(){
+    private void buildAlertMessageShortTrack() {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setTitle("Uwaga!").setMessage("Trasa jest dosyc krotka, chcesz ja usunac?");
         alertDialogBuilder.setPositiveButton("Tak!", new DialogInterface.OnClickListener() {
@@ -379,5 +365,28 @@ public class MapsActivity extends FragmentActivity implements
                 });
         final AlertDialog alert = builder.create();
         alert.show();
+    }
+
+    private boolean checkisGPSenabled() {
+        manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) return true;
+        return false;
+    }
+
+    class bStartStopClick implements View.OnClickListener {
+        @Override
+        public void onClick(View view) {
+            if (!runnerisStarted) {
+                if(!checkisGPSenabled()) buildAlertMessageNoGps();
+                else startRunner();
+            } else stopRunner();
+        }
+    }
+
+    class bHistoryClick implements View.OnClickListener {
+        @Override
+        public void onClick(View view) {
+            startActivity(historyIntent);
+        }
     }
 }
