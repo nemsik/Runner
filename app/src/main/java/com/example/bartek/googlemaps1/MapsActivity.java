@@ -2,9 +2,11 @@ package com.example.bartek.googlemaps1;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.arch.persistence.room.Room;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -64,7 +66,8 @@ public class MapsActivity extends FragmentActivity implements
     private List<User> users;
     private long userStartTime = 0;
     private double userSpeed = 0, userRate = 0;
-    private Handler handler = new Handler();;
+    private Handler handler = new Handler();
+    ;
     private boolean permissionGranted, runnerisStarted = false;
     private GoogleMap mMap;
     private PolylineOptions rectOptions;
@@ -74,6 +77,7 @@ public class MapsActivity extends FragmentActivity implements
     private IntentFilter intentFilter = new IntentFilter(Filter);
     private Intent gpsService, historyIntent;
     private BroadcastReceiver broadcastReceiver;
+    private LocationManager manager;
 
 
     @Override
@@ -86,6 +90,8 @@ public class MapsActivity extends FragmentActivity implements
         textViewKcal = (TextView) findViewById(R.id.textViewKcal);
         textViewRate = (TextView) findViewById(R.id.textViewRate);
         textViewTime = (TextView) findViewById(R.id.textViewTime);
+
+        manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment);
@@ -120,8 +126,6 @@ public class MapsActivity extends FragmentActivity implements
                 }
             }
         };
-
-        //loadState();
     }
 
     @Override
@@ -152,6 +156,7 @@ public class MapsActivity extends FragmentActivity implements
         userStartTime = Calendar.getInstance().getTimeInMillis();
         user.setStart_time(userStartTime);
         userDao.insert(user);
+        rectOptions = new PolylineOptions();
         registerReceiver(broadcastReceiver, intentFilter);
         if (!isMyServiceRunning(GpsService.class)) startService(gpsService);
         handler.postDelayed(runnable, 1000);
@@ -162,16 +167,19 @@ public class MapsActivity extends FragmentActivity implements
         try {
             unregisterReceiver(broadcastReceiver);
             stopService(gpsService);
-        }catch (Exception e){
+        } catch (Exception e) {
             Log.i(TAG, "receiver is not registered");
         }
         runnerisStarted = false;
         mMap.clear();
         handler.removeCallbacks(runnable);
         appLog();
+        user = userDao.getUser();
+        if (user.getLatitude().size() < 10) buildAlertMessageShortTrack();
     }
 
     private void continueRunner() {
+
         runnerisStarted = true;
         bStartStop.setText("Stop");
         user = new User();
@@ -249,10 +257,14 @@ public class MapsActivity extends FragmentActivity implements
         if (runnerisStarted) {
             try {
                 unregisterReceiver(broadcastReceiver);
-            }catch (Exception e){}
+            } catch (Exception e) {
+                Log.d(TAG, "can't unregister receiver");
+            }
             try {
                 handler.removeCallbacks(runnable);
-            }catch (Exception e){}
+            } catch (Exception e) {
+                Log.d(TAG, "can't remove callbacks");
+            }
         }
         saveState();
     }
@@ -264,10 +276,14 @@ public class MapsActivity extends FragmentActivity implements
         if (runnerisStarted) {
             try {
                 unregisterReceiver(broadcastReceiver);
-            }catch (Exception e){}
+            } catch (Exception e) {
+                Log.d(TAG, "can't unregister receiver");
+            }
             try {
                 handler.removeCallbacks(runnable);
-            }catch (Exception e){}
+            } catch (Exception e) {
+                Log.d(TAG, "can't remove callbacks");
+            }
         }
         saveState();
     }
@@ -311,19 +327,57 @@ public class MapsActivity extends FragmentActivity implements
     public void onMyLocationClick(@NonNull Location location) {
     }
 
-    class bStartStopClick implements View.OnClickListener{
+    class bStartStopClick implements View.OnClickListener {
         @Override
         public void onClick(View view) {
-            if (!runnerisStarted)
-                startRunner();
-            else stopRunner();
+            if (!runnerisStarted) {
+                if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                    buildAlertMessageNoGps();
+                else startRunner();
+            } else stopRunner();
         }
     }
 
-    class bHistoryClick implements View.OnClickListener{
+    class bHistoryClick implements View.OnClickListener {
         @Override
         public void onClick(View view) {
             startActivity(historyIntent);
         }
+    }
+
+    private void buildAlertMessageShortTrack(){
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setTitle("Uwaga!").setMessage("Trasa jest dosyc krotka, chcesz ja usunac?");
+        alertDialogBuilder.setPositiveButton("Tak!", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                userDao.delete(user);
+            }
+        });
+        alertDialogBuilder.setNegativeButton("Nie!", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.cancel();
+            }
+        });
+        alertDialogBuilder.create().show();
+    }
+
+    private void buildAlertMessageNoGps() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        dialog.cancel();
+                    }
+                });
+        final AlertDialog alert = builder.create();
+        alert.show();
     }
 }
