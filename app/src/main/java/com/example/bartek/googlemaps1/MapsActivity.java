@@ -181,6 +181,7 @@ public class MapsActivity extends FragmentActivity implements
         }
         appLog();
         user = userDao.getUser();
+        saveState();
         if (user.getLatitude().size() < 10) buildAlertMessageShortTrack();
     }
 
@@ -295,7 +296,6 @@ public class MapsActivity extends FragmentActivity implements
 
     private void appLog() {
         users = userDao.getAll();
-        Log.d(TAG, "" + users.size());
         for (int i = 0; i < users.size(); i++) {
             StringBuilder stringBuilder = new StringBuilder();
             double speed = 0.0;
@@ -333,19 +333,18 @@ public class MapsActivity extends FragmentActivity implements
 
     private void buildAlertMessageShortTrack() {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setTitle("Uwaga!").setMessage("Trasa jest dosyc krotka, chcesz ja usunac?");
-        alertDialogBuilder.setPositiveButton("Tak!", new DialogInterface.OnClickListener() {
+        alertDialogBuilder.setMessage("The distance is short, do you want to delete it?");
+        alertDialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 userDao.delete(user);
             }
-        });
-        alertDialogBuilder.setNegativeButton("Nie!", new DialogInterface.OnClickListener() {
+        }).setNegativeButton("No", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.cancel();
             }
-        });
+        }).setCancelable(false);
         alertDialogBuilder.create().show();
     }
 
