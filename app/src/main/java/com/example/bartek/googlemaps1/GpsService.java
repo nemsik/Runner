@@ -2,6 +2,7 @@ package com.example.bartek.googlemaps1;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.arch.persistence.room.Room;
 import android.content.Context;
@@ -39,10 +40,9 @@ public class GpsService extends Service {
     private User user;
     private Intent intent;
     private double speed;
-    private int status = 0;
-    private boolean isGpsEnabled = false, isNetworkEnabled = false;
     private Location mLastLocation;
     private NotificationCompat.Builder nofificationBuilder;
+    private NotificationManager notificationManager;
 
     private class LocationListener implements android.location.LocationListener {
 
@@ -73,10 +73,6 @@ public class GpsService extends Service {
         @Override
         public void onProviderDisabled(String provider) {
             Log.e(TAG, "onProviderDisabled: " + provider);
-            checkStatus();
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.putExtra(MapsActivity.statusTAG, status);
-            sendBroadcast(intent);
         }
 
         @Override
@@ -131,44 +127,12 @@ public class GpsService extends Service {
             Log.d(TAG, "gps provider does not exist " + ex.getMessage());
         }
 
-        checkStatus();
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(MapsActivity.statusTAG, status);
-        sendBroadcast(intent);
-
         AppDatabase db = Room.databaseBuilder(getApplicationContext(),
                 AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
         userDao = db.userDao();
         user = userDao.getUser();
 
-        nofificationBuilder = new NotificationCompat.Builder(this, "CHANNEL_ID");
-        nofificationBuilder.setAutoCancel(true)
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setWhen(System.currentTimeMillis())
-                .setSmallIcon(R.drawable.ic_launcher_background)
-                .setTicker("Dilip21")
-                .setContentTitle("Default notification")
-                .setContentText("Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
-                .setContentInfo("Info");
-
-        NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.notify(1, nofificationBuilder.build());
-    }
-
-    private int checkStatus() {
-        isGpsEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        isNetworkEnabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        Log.i(TAG, "GPS ENABLED: " + isGpsEnabled);
-        Log.i(TAG, "NETWORK ENABLED " + isNetworkEnabled);
-
-        if (!isGpsEnabled && !isNetworkEnabled) {
-            status = 0;
-        } else if (!isGpsEnabled & isNetworkEnabled) {
-            status = 1;
-        } else if (isGpsEnabled) {
-            status = 2;
-        }
-        return status;
+        buildNotification();
     }
 
 
@@ -189,7 +153,7 @@ public class GpsService extends Service {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean(MapsActivity.SharedRunnerIsStarted, false);
         editor.commit();
-
+        notificationManager.cancel(1);
     }
 
     private void initializeLocationManager() {
@@ -197,6 +161,24 @@ public class GpsService extends Service {
         if (mLocationManager == null) {
             mLocationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
         }
+    }
+
+    private void buildNotification(){
+        nofificationBuilder = new NotificationCompat.Builder(this, "CHANNEL_ID");
+        nofificationBuilder.setAutoCancel(true)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setTicker(String.valueOf(R.string.app_name))
+                .setWhen(System.currentTimeMillis())
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setContentTitle(String.valueOf(R.string.app_name))
+                .setContentText("Your tracker is running")
+                .setOngoing(true);
+
+        Intent mapsActivityIntent = new Intent(this, MapsActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, mapsActivityIntent, 0);
+        nofificationBuilder.setContentIntent(contentIntent);
+        notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(1, nofificationBuilder.build());
     }
 
 }

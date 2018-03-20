@@ -92,11 +92,6 @@ public class MapsActivity extends FragmentActivity implements
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                Log.d(TAG, "onReceive: " + intent.getIntExtra(statusTAG, 0));
-                if (intent.getIntExtra(statusTAG, 0) == 0) {
-                    Log.d(TAG, "onReceive:  LOCATION IS DISABLED");
-                    stopRunner();
-                }
                 try {
                     setGUI();
                 } catch (Exception e) {
