@@ -1,5 +1,7 @@
 package com.example.bartek.googlemaps1;
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.arch.persistence.room.Room;
 import android.content.Context;
@@ -13,6 +15,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.example.bartek.googlemaps1.Database.AppDatabase;
@@ -39,6 +42,7 @@ public class GpsService extends Service {
     private int status = 0;
     private boolean isGpsEnabled = false, isNetworkEnabled = false;
     private Location mLastLocation;
+    private NotificationCompat.Builder nofificationBuilder;
 
     private class LocationListener implements android.location.LocationListener {
 
@@ -136,6 +140,19 @@ public class GpsService extends Service {
                 AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
         userDao = db.userDao();
         user = userDao.getUser();
+
+        nofificationBuilder = new NotificationCompat.Builder(this, "CHANNEL_ID");
+        nofificationBuilder.setAutoCancel(true)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setWhen(System.currentTimeMillis())
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setTicker("Dilip21")
+                .setContentTitle("Default notification")
+                .setContentText("Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
+                .setContentInfo("Info");
+
+        NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(1, nofificationBuilder.build());
     }
 
     private int checkStatus() {
