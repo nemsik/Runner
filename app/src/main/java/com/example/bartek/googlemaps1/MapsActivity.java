@@ -72,7 +72,7 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_maps);
         bStartStop = (Button) findViewById(R.id.buttonStartStop);
         bHistory = (Button) findViewById(R.id.buttonHistory);
         textViewDistance = (TextView) findViewById(R.id.textViewDistance);
@@ -139,6 +139,7 @@ public class MapsActivity extends FragmentActivity implements
         user = new User();
         userStartTime = Calendar.getInstance().getTimeInMillis();
         user.setStart_time(userStartTime);
+        user.setEnd_time(userStartTime);
         userDao.insert(user);
         rectOptions = new PolylineOptions();
         registerReceiver(broadcastReceiver, intentFilter);

@@ -6,4 +6,11 @@
     android:layout_height="match_parent"
     tools:context="com.example.bartek.googlemaps1.DetailsActivity">
 
+    <fragment
+        android:id="@+id/fragmentInfo"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" />
+
 </android.support.constraint.ConstraintLayout>

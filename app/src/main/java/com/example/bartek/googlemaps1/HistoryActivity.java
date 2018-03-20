@@ -14,6 +14,8 @@ import com.example.bartek.googlemaps1.Database.AppDatabase;
 import com.example.bartek.googlemaps1.Database.User;
 import com.example.bartek.googlemaps1.Database.UserDao;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class HistoryActivity extends AppCompatActivity {
@@ -42,11 +44,12 @@ public class HistoryActivity extends AppCompatActivity {
         userDao = db.userDao();
 
         final List<User> userList = userDao.getAll();
+        Collections.reverse(userList);
         Log.d(TAG, "onCreate: " + userList.toString());
 
 
         listView = (ListView)findViewById(R.id.listview);
-        adpater = new HistoryAdpater(context, R.layout.listviewadapter ,userList);
+        adpater = new HistoryAdpater(context, R.layout.historyadapter,userList);
         listView.setAdapter(adpater);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
