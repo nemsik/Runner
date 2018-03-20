@@ -114,9 +114,14 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        LatLng uniLodz = new LatLng(51.7770423, 19.48356);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(uniLodz));
-        checkPermissions();
+        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+            @Override
+            public void onMapLoaded() {
+                LatLng uniLodz = new LatLng(51.7770423, 19.48356);
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(uniLodz));
+                checkPermissions();
+            }
+        });
     }
 
     private boolean checkPermissions() {
