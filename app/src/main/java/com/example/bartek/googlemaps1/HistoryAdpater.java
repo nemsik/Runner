@@ -20,13 +20,13 @@ import java.util.List;
  * Created by bartek on 18.03.2018.
  */
 
-public class ListViewAdpater extends ArrayAdapter<User> {
+public class HistoryAdpater extends ArrayAdapter<User> {
 
     private final static String TAG = "ListViewAdapter";
 
     private Context context;
 
-    public ListViewAdpater(Context context, int resource, List<User> items) {
+    public HistoryAdpater(Context context, int resource, List<User> items) {
         super(context, resource, items);
         this.context = context;
     }

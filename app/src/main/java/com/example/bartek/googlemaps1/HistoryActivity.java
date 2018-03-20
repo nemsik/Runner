@@ -2,10 +2,12 @@ package com.example.bartek.googlemaps1;
 
 import android.arch.persistence.room.Room;
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Adapter;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.example.bartek.googlemaps1.Database.AppDatabase;
@@ -20,7 +22,7 @@ public class HistoryActivity extends AppCompatActivity {
 
     private Context context;
     private ListView listView;
-    private ListViewAdpater adpater;
+    private HistoryAdpater adpater;
 
     private User user;
     private UserDao userDao;
@@ -39,13 +41,21 @@ public class HistoryActivity extends AppCompatActivity {
 
         userDao = db.userDao();
 
-        List<User> userList = userDao.getAll();
+        final List<User> userList = userDao.getAll();
         Log.d(TAG, "onCreate: " + userList.toString());
 
 
         listView = (ListView)findViewById(R.id.listview);
-        adpater = new ListViewAdpater(context, R.layout.listviewadapter ,userList);
+        adpater = new HistoryAdpater(context, R.layout.listviewadapter ,userList);
         listView.setAdapter(adpater);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Intent detailsActivity = new Intent(context, DetailsActivity.class);
+                detailsActivity.putExtra(DetailsActivity.IntentTag, userList.get(i).getId());
+                startActivity(detailsActivity);
+            }
+        });
 
     }
 }
