@@ -34,23 +34,8 @@ public class User {
     @ColumnInfo(name = "distance")
     private double distance = 0;
 
-    @ColumnInfo(name = "kcal")
-    private double kcal = 0;
-
     public void addDistance(double distance) {
         this.distance += distance;
-    }
-
-    public void addKcal(double kcal) {
-        this.kcal += kcal;
-    }
-
-    public double getKcal() {
-        return kcal;
-    }
-
-    public void setKcal(double kcal) {
-        this.kcal = kcal;
     }
 
     public int getId() {

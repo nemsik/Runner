@@ -11,42 +11,30 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Handler;
-import android.os.Looper;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 
 import com.example.bartek.googlemaps1.Database.AppDatabase;
 import com.example.bartek.googlemaps1.Database.User;
 import com.example.bartek.googlemaps1.Database.UserDao;
-import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.model.PolygonOptions;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements
@@ -60,12 +48,14 @@ public class MapsActivity extends FragmentActivity implements
     public static final String SharedRunnerIsStarted = "runnerisStarted";
     public static final String statusTAG = "LocationStatus";
     private Button bStartStop, bHistory;
-    private TextView textViewTime, textViewDistance, textViewKcal, textViewRate;
+    private TextView textViewTime, textViewDistance, textViewSpeed, textViewAvgSpeed;
     private User user;
     private UserDao userDao;
     private List<User> users;
+    private ArrayList<Double> userSpeed;
+    private double speed = 0, distance = 0, avgSpeed = 0;
+    int userSpeedSize = 0;
     private long userStartTime = 0;
-    private double userSpeed = 0, userRate = 0;
     private Handler handler = new Handler();
     private boolean permissionGranted, runnerisStarted = false;
     private GoogleMap mMap;
@@ -86,8 +76,8 @@ public class MapsActivity extends FragmentActivity implements
         bStartStop = (Button) findViewById(R.id.buttonStartStop);
         bHistory = (Button) findViewById(R.id.buttonHistory);
         textViewDistance = (TextView) findViewById(R.id.textViewDistance);
-        textViewKcal = (TextView) findViewById(R.id.textViewKcal);
-        textViewRate = (TextView) findViewById(R.id.textViewRate);
+        textViewSpeed = (TextView) findViewById(R.id.textViewSpeed);
+        textViewAvgSpeed = (TextView) findViewById(R.id.textViewAvgSpeed);
         textViewTime = (TextView) findViewById(R.id.textViewTime);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -148,6 +138,7 @@ public class MapsActivity extends FragmentActivity implements
 
     private void startRunner() {
         if (!permissionGranted) return;
+        userSpeed = new ArrayList<>();
         runnerisStarted = true;
         bStartStop.setText("Stop");
         user = new User();
@@ -190,6 +181,9 @@ public class MapsActivity extends FragmentActivity implements
         bStartStop.setText("Stop");
         user = new User();
         user = userDao.getUser();
+
+        countAvgSpeed();
+
         rectOptions = new PolylineOptions();
         for (int i = 0; i < user.getLatitude().size() - 1; i++) {
             latLng = new LatLng(user.getLatitude().get(i), user.getLongitude().get(i));
@@ -200,6 +194,16 @@ public class MapsActivity extends FragmentActivity implements
 
         userStartTime = user.getStart_time();
         handler.postDelayed(runnable, 1000);
+    }
+
+    private void countAvgSpeed(){
+        userSpeed = user.getSpeed();
+        avgSpeed = 0;
+        userSpeedSize = userSpeed.size();
+        for(int i =0; i< userSpeedSize; i++){
+            avgSpeed += userSpeed.get(i);
+        }
+        avgSpeed /= userSpeedSize;
     }
 
 
@@ -213,11 +217,12 @@ public class MapsActivity extends FragmentActivity implements
     private void setGUI() {
         user = userDao.getUser();
         drawRoute(user.getLastLatitude(), user.getLastLongitude());
-        double distance = user.getDistance() / 1000;
+        distance = user.getDistance() / 1000;
         textViewDistance.setText(String.format("%.2f", distance));
-        userSpeed = user.getLastSpeed();
-        userRate = 60 / userSpeed;
-        textViewRate.setText(String.format("%.2f", userRate));
+        speed = user.getLastSpeed();
+        textViewSpeed.setText(String.format("%.2f", speed));
+        countAvgSpeed();
+        textViewAvgSpeed.setText(String.format("%.2f", avgSpeed));
     }
 
 
