@@ -13,6 +13,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -52,8 +53,6 @@ public class MapsActivity extends FragmentActivity implements
     private Button bStartStop, bHistory;
     private TextView textViewTime, textViewDistance, textViewSpeed, textViewAvgSpeed;
     private User user;
-    private UserDao userDao;
-    private List<User> users;
     private ArrayList<Double> userSpeed;
     private double speed = 0, distance = 0, avgSpeed = 0;
     private long userStartTime = 0;
@@ -69,7 +68,7 @@ public class MapsActivity extends FragmentActivity implements
     private BroadcastReceiver broadcastReceiver;
     private LocationManager manager;
     private Context context;
-    private AsyncTaskDatabase startTask, stopTask, contiuneTask, drawGuiTask;
+    private AsyncTaskDatabase startTask, stopTask, contiuneTask, drawGuiTask, deleteTask;
 
 
     @Override
@@ -83,7 +82,6 @@ public class MapsActivity extends FragmentActivity implements
         textViewAvgSpeed = (TextView) findViewById(R.id.textViewAvgSpeed);
         textViewTime = (TextView) findViewById(R.id.textViewTime);
         context = getApplicationContext();
-
         setAsyncTaskDatabase(context);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -107,9 +105,6 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     private void initializeMapsActivity() {
-        AppDatabase db = Room.databaseBuilder(getApplicationContext(),
-                AppDatabase.class, "database-name").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-        userDao = db.userDao();
         gpsService = new Intent(this, GpsService.class);
         historyIntent = new Intent(this, HistoryActivity.class);
         detailsIntent = new Intent(this, DetailsActivity.class);
@@ -293,7 +288,7 @@ public class MapsActivity extends FragmentActivity implements
         alertDialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                userDao.delete(user);
+                deleteTask.delete(user);
             }
         }).setNegativeButton("No", new DialogInterface.OnClickListener() {
             @Override
@@ -362,6 +357,9 @@ public class MapsActivity extends FragmentActivity implements
             public void getAllResponse(List<User> users) {}
             @Override
             public void updateResponse() {}
+
+            @Override
+            public void deleteRsponde() {}
         });
 
         stopTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
@@ -382,6 +380,8 @@ public class MapsActivity extends FragmentActivity implements
             public void getAllResponse(List<User> users) {}
             @Override
             public void updateResponse() {}
+            @Override
+            public void deleteRsponde() {}
         });
 
         contiuneTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
@@ -407,6 +407,9 @@ public class MapsActivity extends FragmentActivity implements
             public void getAllResponse(List<User> users) {}
             @Override
             public void updateResponse() {}
+
+            @Override
+            public void deleteRsponde() {}
         });
 
         drawGuiTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
@@ -429,6 +432,21 @@ public class MapsActivity extends FragmentActivity implements
             public void getAllResponse(List<User> usersResponse) {}
             @Override
             public void updateResponse() {}
+            @Override
+            public void deleteRsponde() {}
+        });
+
+        deleteTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
+            @Override
+            public void insertUserResponse() {}
+            @Override
+            public void getUserResponse(User userResponse) {}
+            @Override
+            public void getAllResponse(List<User> usersResponse) {}
+            @Override
+            public void updateResponse() {}
+            @Override
+            public void deleteRsponde() {}
         });
     }
 }

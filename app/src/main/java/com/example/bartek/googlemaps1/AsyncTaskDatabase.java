@@ -22,6 +22,7 @@ public class AsyncTaskDatabase{
         void getUserResponse(User userResponse);
         void getAllResponse(List<User> usersResponse);
         void updateResponse();
+        void deleteRsponde();
     }
 
     public final static String TAG = "AsyncTaskDatabase";
@@ -111,6 +112,26 @@ public class AsyncTaskDatabase{
             @Override
             protected void onPostExecute(Void aVoid) {
                 delegate.updateResponse();
+            }
+        }.execute();
+    }
+
+    public void delete(final User user){
+        new AsyncTask<User, Void, Void>(){
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                delegate.deleteRsponde();
+            }
+
+            @Override
+            protected Void doInBackground(User... users) {
+                userDao.delete(user);
+                return null;
             }
         }.execute();
     }
