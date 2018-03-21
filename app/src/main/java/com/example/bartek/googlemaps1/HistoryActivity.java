@@ -13,8 +13,8 @@ import android.widget.ListView;
 import com.example.bartek.googlemaps1.Database.AppDatabase;
 import com.example.bartek.googlemaps1.Database.User;
 import com.example.bartek.googlemaps1.Database.UserDao;
+import com.example.bartek.googlemaps1.DetailsActivities.DetailsActivity;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 

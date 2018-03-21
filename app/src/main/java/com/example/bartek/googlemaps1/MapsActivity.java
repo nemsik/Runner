@@ -26,6 +26,7 @@ import android.widget.TextView;
 import com.example.bartek.googlemaps1.Database.AppDatabase;
 import com.example.bartek.googlemaps1.Database.User;
 import com.example.bartek.googlemaps1.Database.UserDao;
+import com.example.bartek.googlemaps1.DetailsActivities.DetailsActivity;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -54,7 +55,6 @@ public class MapsActivity extends FragmentActivity implements
     private List<User> users;
     private ArrayList<Double> userSpeed;
     private double speed = 0, distance = 0, avgSpeed = 0;
-    int userSpeedSize = 0;
     private long userStartTime = 0;
     private Handler handler = new Handler();
     private boolean permissionGranted, runnerisStarted = false;
@@ -64,7 +64,7 @@ public class MapsActivity extends FragmentActivity implements
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private IntentFilter intentFilter = new IntentFilter(Filter);
-    private Intent gpsService, historyIntent;
+    private Intent gpsService, historyIntent, detailsIntent;
     private BroadcastReceiver broadcastReceiver;
     private LocationManager manager;
 
@@ -107,6 +107,7 @@ public class MapsActivity extends FragmentActivity implements
         userDao = db.userDao();
         gpsService = new Intent(this, GpsService.class);
         historyIntent = new Intent(this, HistoryActivity.class);
+        detailsIntent = new Intent(this, DetailsActivity.class);
         sharedPreferences = getSharedPreferences(SharedTag, Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
     }
@@ -173,6 +174,10 @@ public class MapsActivity extends FragmentActivity implements
         user = userDao.getUser();
         saveState();
         if (user.getLatitude().size() < 10) buildAlertMessageShortTrack();
+        else {
+            detailsIntent.putExtra(DetailsActivity.IntentTag, user.getId());
+            startActivity(detailsIntent);
+        }
     }
 
     private void continueRunner() {
@@ -217,7 +222,7 @@ public class MapsActivity extends FragmentActivity implements
         textViewSpeed.setText(String.format("%.2f", speed));
         countAvgSpeed();
         textViewAvgSpeed.setText(String.format("%.2f", avgSpeed));
-        if (speed < 30) mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
+        if (speed < 30) mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
         else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13));
     }
 
@@ -343,7 +348,8 @@ public class MapsActivity extends FragmentActivity implements
         }).setNegativeButton("No", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.cancel();
+                detailsIntent.putExtra(DetailsActivity.IntentTag, user.getId());
+                startActivity(detailsIntent);
             }
         }).setCancelable(false);
         alertDialogBuilder.create().show();

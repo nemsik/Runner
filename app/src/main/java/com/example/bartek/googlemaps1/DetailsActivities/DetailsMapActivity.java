@@ -1,7 +1,6 @@
-package com.example.bartek.googlemaps1;
+package com.example.bartek.googlemaps1.DetailsActivities;
 
 import android.arch.persistence.room.Room;
-import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,12 +8,12 @@ import android.util.Log;
 import com.example.bartek.googlemaps1.Database.AppDatabase;
 import com.example.bartek.googlemaps1.Database.User;
 import com.example.bartek.googlemaps1.Database.UserDao;
+import com.example.bartek.googlemaps1.R;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -22,10 +21,9 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-public class DetailsActivity extends AppCompatActivity implements OnMapReadyCallback {
-    private static final String TAG = "DetailsActivity";
-    public static final String IntentTag = "userid";
+public class DetailsMapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
+    public static final String TAG = "DetailsMapsActivity";
     private User user;
     private UserDao userDao;
     private int userID;
@@ -36,7 +34,8 @@ public class DetailsActivity extends AppCompatActivity implements OnMapReadyCall
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_details);
+        setContentView(R.layout.activity_details_map);
+
         initializeDetailsActivity();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -68,14 +67,12 @@ public class DetailsActivity extends AppCompatActivity implements OnMapReadyCall
             public void onMapLoaded() {
                 mMap.getUiSettings().setScrollGesturesEnabled(false);
                 mMap.getUiSettings().setZoomGesturesEnabled(false);
-                LatLng start = new LatLng(user.getLatitude().get(1), user.getLongitude().get(1));
-                LatLng end = new LatLng(user.getLastLatitude(), user.getLastLongitude());
-                Marker startMarker = mMap.addMarker(new MarkerOptions().position(start).title("Start"));
-                Marker endMarker = mMap.addMarker(new MarkerOptions().position(end).title("End"));
-                startMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-                startMarker.showInfoWindow();
-                drawRoute();
-                boundsBulider();
+                if(user.getLatitude().size() > 2){
+                    addMarkers();
+                    drawRoute();
+                    boundsBulider();
+                }
+
             }
         });
     }
@@ -106,5 +103,14 @@ public class DetailsActivity extends AppCompatActivity implements OnMapReadyCall
             rectOptions.add(latLng);
         }
         mMap.addPolyline(rectOptions);
+    }
+
+    private void addMarkers(){
+        LatLng start = new LatLng(user.getLatitude().get(0), user.getLongitude().get(0));
+        LatLng end = new LatLng(user.getLastLatitude(), user.getLastLongitude());
+        Marker startMarker = mMap.addMarker(new MarkerOptions().position(start).title("Start"));
+        Marker endMarker = mMap.addMarker(new MarkerOptions().position(end).title("End"));
+        startMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+        startMarker.showInfoWindow();
     }
 }

@@ -45,7 +45,8 @@
             android:process=":my_service" />
 
         <activity android:name=".HistoryActivity" />
-        <activity android:name=".DetailsActivity"></activity>
+        <activity android:name=".DetailsActivities.DetailsActivity" />
+        <activity android:name=".DetailsActivities.DetailsMapActivity"></activity>
     </application>
 
 </manifest>
