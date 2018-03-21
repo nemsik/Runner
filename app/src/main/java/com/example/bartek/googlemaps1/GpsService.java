@@ -194,4 +194,9 @@ public class GpsService extends Service implements AsyncTaskDatabase.AsyncRespon
     @Override
     public void updateResponse() {sendBroadcast(intent);}
 
+    @Override
+    public void deleteRsponde() {
+
+    }
+
 }

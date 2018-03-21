@@ -357,7 +357,6 @@ public class MapsActivity extends FragmentActivity implements
             public void getAllResponse(List<User> users) {}
             @Override
             public void updateResponse() {}
-
             @Override
             public void deleteRsponde() {}
         });

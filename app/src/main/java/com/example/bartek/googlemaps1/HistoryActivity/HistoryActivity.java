@@ -55,16 +55,6 @@ public class HistoryActivity extends AppCompatActivity implements AsyncTaskDatab
     }
 
     @Override
-    public void insertUserResponse() {
-
-    }
-
-    @Override
-    public void getUserResponse(User user) {
-
-    }
-
-    @Override
     public void getAllResponse(List<User> users) {
         userList = users;
         Collections.reverse(userList);
@@ -72,8 +62,12 @@ public class HistoryActivity extends AppCompatActivity implements AsyncTaskDatab
     }
 
     @Override
-    public void updateResponse() {
-
-    }
+    public void insertUserResponse() {}
+    @Override
+    public void getUserResponse(User user) {}
+    @Override
+    public void updateResponse() {}
+    @Override
+    public void deleteRsponde() {}
 }
 
