@@ -51,22 +51,6 @@ public class DetailsActivity extends AppCompatActivity implements OnMapReadyCall
         loadUser();
     }
 
-    private void loadUser() {
-        user = new User();
-        userID = getIntent().getIntExtra(IntentTag, 1);
-        user = userDao.getById(userID);
-        Log.d(TAG, "loadUser: " + user.getId());
-    }
-
-    private void drawRoute() {
-        rectOptions = new PolylineOptions();
-        for (int i = 0; i < user.getLatitude().size(); i++) {
-            latLng = new LatLng(user.getLatitude().get(i), user.getLongitude().get(i));
-            rectOptions.add(latLng);
-        }
-        mMap.addPolyline(rectOptions);
-    }
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -86,24 +70,41 @@ public class DetailsActivity extends AppCompatActivity implements OnMapReadyCall
                 mMap.getUiSettings().setZoomGesturesEnabled(false);
                 LatLng start = new LatLng(user.getLatitude().get(1), user.getLongitude().get(1));
                 LatLng end = new LatLng(user.getLastLatitude(), user.getLastLongitude());
-
                 Marker startMarker = mMap.addMarker(new MarkerOptions().position(start).title("Start"));
                 Marker endMarker = mMap.addMarker(new MarkerOptions().position(end).title("End"));
                 startMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-
                 startMarker.showInfoWindow();
-
-                LatLngBounds.Builder builder = new LatLngBounds.Builder();
-                builder.include(start).include(end);
-                LatLngBounds bounds = builder.build();
-
                 drawRoute();
-
-                int width = getResources().getDisplayMetrics().widthPixels;
-                int padding = (int) (width * 0.12);
-                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-                mMap.moveCamera(cameraUpdate);
+                boundsBulider();
             }
         });
+    }
+
+    private void loadUser() {
+        user = new User();
+        userID = getIntent().getIntExtra(IntentTag, 1);
+        user = userDao.getById(userID);
+        Log.d(TAG, "loadUser: " + user.getId());
+    }
+
+    private void boundsBulider(){
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for(int i=0; i<user.getLatitude().size(); i++){
+            builder.include(new LatLng(user.getLatitude().get(i), user.getLongitude().get(i)));
+        }
+        LatLngBounds bounds = builder.build();
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int padding = (int) (width * 0.12);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+        mMap.moveCamera(cameraUpdate);
+    }
+
+    private void drawRoute() {
+        rectOptions = new PolylineOptions();
+        for (int i = 0; i < user.getLatitude().size(); i++) {
+            latLng = new LatLng(user.getLatitude().get(i), user.getLongitude().get(i));
+            rectOptions.add(latLng);
+        }
+        mMap.addPolyline(rectOptions);
     }
 }

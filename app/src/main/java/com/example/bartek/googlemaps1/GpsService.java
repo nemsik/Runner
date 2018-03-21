@@ -34,12 +34,13 @@ import java.util.Map;
 public class GpsService extends Service {
     private static final String TAG = "GpsService";
     private LocationManager mLocationManager = null;
-    private static final int LOCATION_INTERVAL = 3000;
+    private static final int LOCATION_INTERVAL = 2000;
     private static final float LOCATION_DISTANCE = 10f;
     private UserDao userDao;
     private User user;
     private Intent intent;
     private double speed;
+    private long time;
     private Location mLastLocation;
     private NotificationCompat.Builder nofificationBuilder;
     private NotificationManager notificationManager;
@@ -49,22 +50,24 @@ public class GpsService extends Service {
         public LocationListener(String provider) {
             Log.e(TAG, "LocationListener " + provider);
             mLastLocation = new Location(provider);
+            Log.d(TAG, "LocationListener: " + mLastLocation);
         }
 
         @Override
         public void onLocationChanged(Location location) {
+            time = Calendar.getInstance().getTimeInMillis();
             Log.e(TAG, "onLocationChanged: " + location);
             if (mLastLocation.getLongitude() != 0 && mLastLocation.getLongitude() != 0)
                 user.addDistance(mLastLocation.distanceTo(location));
             mLastLocation.set(location);
             if (location != null) {
+                user.setEnd_time(time);
                 user.addLatitude(location.getLatitude());
                 user.addLongitude(location.getLongitude());
                 speed = location.getSpeed();
                 speed *= 3.6;
                 Log.e(TAG, "onLocationChanged: " + speed );
                 user.addSpeed(speed);
-                user.setEnd_time(Calendar.getInstance().getTimeInMillis());
                 userDao.update(user);
                 sendBroadcast(intent);
             }

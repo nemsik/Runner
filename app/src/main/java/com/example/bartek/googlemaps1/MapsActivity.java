@@ -117,8 +117,6 @@ public class MapsActivity extends FragmentActivity implements
         mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
             @Override
             public void onMapLoaded() {
-                LatLng uniLodz = new LatLng(51.7770423, 19.48356);
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(uniLodz));
                 checkPermissions();
             }
         });
@@ -146,9 +144,9 @@ public class MapsActivity extends FragmentActivity implements
         user.setStart_time(userStartTime);
         user.setEnd_time(userStartTime);
         userDao.insert(user);
+        if (!isMyServiceRunning(GpsService.class)) startService(gpsService);
         rectOptions = new PolylineOptions();
         registerReceiver(broadcastReceiver, intentFilter);
-        if (!isMyServiceRunning(GpsService.class)) startService(gpsService);
         handler.postDelayed(runnable, 1000);
     }
 
@@ -198,13 +196,9 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     private void countAvgSpeed(){
-        userSpeed = user.getSpeed();
-        avgSpeed = 0;
-        userSpeedSize = userSpeed.size();
-        for(int i =0; i< userSpeedSize; i++){
-            avgSpeed += userSpeed.get(i);
-        }
-        avgSpeed /= userSpeedSize;
+        double difftime = (user.getEnd_time() - user.getStart_time()) / 1000;
+        avgSpeed = (distance / difftime) * 3.6;
+        Log.d(TAG, "countAvgSpeed: " + avgSpeed);
     }
 
 
@@ -212,18 +206,19 @@ public class MapsActivity extends FragmentActivity implements
         latLng = new LatLng(latitude, longitude);
         rectOptions.add(latLng);
         mMap.addPolyline(rectOptions);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
     }
 
     private void setGUI() {
         user = userDao.getUser();
         drawRoute(user.getLastLatitude(), user.getLastLongitude());
-        distance = user.getDistance() / 1000;
-        textViewDistance.setText(String.format("%.2f", distance));
+        distance = user.getDistance();
+        textViewDistance.setText(String.format("%.2f", distance / 1000));
         speed = user.getLastSpeed();
         textViewSpeed.setText(String.format("%.2f", speed));
         countAvgSpeed();
         textViewAvgSpeed.setText(String.format("%.2f", avgSpeed));
+        if (speed < 30) mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
+        else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13));
     }
 
 
