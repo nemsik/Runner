@@ -19,8 +19,8 @@ public class AsyncTaskDatabase{
 
     public interface AsyncResponse {
         void insertUserResponse();
-        void getUserResponse(User user);
-        void getAllResponse(List<User> users);
+        void getUserResponse(User userResponse);
+        void getAllResponse(List<User> usersResponse);
         void updateResponse();
     }
 

@@ -68,7 +68,8 @@ public class MapsActivity extends FragmentActivity implements
     private Intent gpsService, historyIntent, detailsIntent;
     private BroadcastReceiver broadcastReceiver;
     private LocationManager manager;
-    private AsyncTaskDatabase asyncTaskDatabase;
+    private Context context;
+    private AsyncTaskDatabase startTask, stopTask, contiuneTask, drawGuiTask;
 
 
     @Override
@@ -81,6 +82,9 @@ public class MapsActivity extends FragmentActivity implements
         textViewSpeed = (TextView) findViewById(R.id.textViewSpeed);
         textViewAvgSpeed = (TextView) findViewById(R.id.textViewAvgSpeed);
         textViewTime = (TextView) findViewById(R.id.textViewTime);
+        context = getApplicationContext();
+
+        setAsyncTaskDatabase(context);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment);
@@ -89,36 +93,12 @@ public class MapsActivity extends FragmentActivity implements
 
         bStartStop.setOnClickListener(new bStartStopClick());
         bHistory.setOnClickListener(new bHistoryClick());
-
-        final AsyncTaskDatabase setgui = new AsyncTaskDatabase(getApplicationContext(), new AsyncTaskDatabase.AsyncResponse() {
-            @Override
-            public void insertUserResponse() {
-            }
-
-            @Override
-            public void getUserResponse(User user) {
-                setGUI(user);
-
-            }
-
-            @Override
-            public void getAllResponse(List<User> users) {
-
-            }
-
-            @Override
-            public void updateResponse() {
-
-            }
-        });
-
         initializeMapsActivity();
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 try {
-                    setgui.getUser();
-                    //setGUI();
+                    drawGuiTask.getUser();
                 } catch (Exception e) {
                     Log.i(TAG, " "+e.getMessage());
                 }
@@ -169,33 +149,7 @@ public class MapsActivity extends FragmentActivity implements
         userStartTime = Calendar.getInstance().getTimeInMillis();
         user.setStart_time(userStartTime);
         user.setEnd_time(userStartTime);
-        asyncTaskDatabase = new AsyncTaskDatabase(getApplicationContext(), new AsyncTaskDatabase.AsyncResponse() {
-            @Override
-            public void insertUserResponse() {
-                Log.d(TAG, "Start runner");
-                if (!isMyServiceRunning(GpsService.class)) startService(gpsService);
-                rectOptions = new PolylineOptions();
-                registerReceiver(broadcastReceiver, intentFilter);
-                handler.postDelayed(runnable, 1000);
-            }
-
-            @Override
-            public void getUserResponse(User user) {
-
-            }
-
-            @Override
-            public void getAllResponse(List<User> users) {
-
-            }
-
-            @Override
-            public void updateResponse() {
-
-            }
-        });
-        asyncTaskDatabase.inserUser(user);
-        //userDao.insert(user);
+        startTask.inserUser(user);
     }
 
     private void stopRunner() {
@@ -217,74 +171,14 @@ public class MapsActivity extends FragmentActivity implements
         } catch (Exception e) {
             Log.i(TAG, "can't remove callbacks");
         }
-        //appLog();
-        asyncTaskDatabase = new AsyncTaskDatabase(getApplicationContext(), new AsyncTaskDatabase.AsyncResponse() {
-            @Override
-            public void insertUserResponse() {
-
-            }
-
-            @Override
-            public void getUserResponse(User user) {
-                Log.d(TAG, "Stop runner: ");
-                if (user.getLatitude().size() < 10) buildAlertMessageShortTrack();
-                else {
-                    detailsIntent.putExtra(DetailsActivity.IntentTag, user.getId());
-                    startActivity(detailsIntent);
-                }
-            }
-
-            @Override
-            public void getAllResponse(List<User> users) {
-
-            }
-
-            @Override
-            public void updateResponse() {
-
-            }
-        });
-        asyncTaskDatabase.getUser();
+        stopTask.getUser();
         saveState();
     }
 
     private void continueRunner() {
         runnerisStarted = true;
         bStartStop.setText("Stop");
-        user = new User();
-        asyncTaskDatabase = new AsyncTaskDatabase(getApplicationContext(), new AsyncTaskDatabase.AsyncResponse() {
-            @Override
-            public void insertUserResponse() {
-
-            }
-
-            @Override
-            public void getUserResponse(User user) {
-                Log.d(TAG, "Conutune runner: ");
-                countAvgSpeed();
-                rectOptions = new PolylineOptions();
-                for (int i = 0; i < user.getLatitude().size() - 1; i++) {
-                    latLng = new LatLng(user.getLatitude().get(i), user.getLongitude().get(i));
-                    rectOptions.add(latLng);
-                }
-                registerReceiver(broadcastReceiver, intentFilter);
-                if (!isMyServiceRunning(GpsService.class)) startService(gpsService);
-
-                userStartTime = user.getStart_time();
-                handler.postDelayed(runnable, 1000);
-            }
-
-            @Override
-            public void getAllResponse(List<User> users) {
-
-            }
-
-            @Override
-            public void updateResponse() {
-
-            }
-        });
-        asyncTaskDatabase.getUser();
+        contiuneTask.getUser();
     }
 
     private void countAvgSpeed(){
@@ -298,20 +192,6 @@ public class MapsActivity extends FragmentActivity implements
         latLng = new LatLng(latitude, longitude);
         rectOptions.add(latLng);
         mMap.addPolyline(rectOptions);
-    }
-
-    private void setGUI(User user) {
-        this.user = user;
-        //user = asyncTaskDatabase.getUser();
-        drawRoute(user.getLastLatitude(), user.getLastLongitude());
-        distance = user.getDistance();
-        textViewDistance.setText(String.format("%.2f", distance / 1000));
-        speed = user.getLastSpeed();
-        textViewSpeed.setText(String.format("%.2f", speed));
-        countAvgSpeed();
-        textViewAvgSpeed.setText(String.format("%.2f", avgSpeed));
-        if (speed < 30) mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
-        else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13));
     }
 
 
@@ -386,25 +266,6 @@ public class MapsActivity extends FragmentActivity implements
             }
         }
         saveState();
-    }
-
-
-    private void appLog() {
-        //users = asyncTaskDatabase.getAll();
-        for (int i = 0; i < users.size(); i++) {
-            StringBuilder stringBuilder = new StringBuilder();
-            double speed = 0.0;
-            for (int j = 0; j < users.get(i).getSpeed().size(); j++)
-                speed += users.get(i).getSpeed().get(j);
-            speed /= users.get(i).getSpeed().size();
-            stringBuilder.append(users.get(i).getId()).append(" ");
-            stringBuilder.append(users.get(i).getStart_time()).append(" ");
-            stringBuilder.append(users.get(i).getEnd_time()).append("\n");
-            stringBuilder.append(speed).append("\n");
-            stringBuilder.append(users.get(i).getLatitude().toString()).append("\n");
-            stringBuilder.append(users.get(i).getLongitude().toString()).append("\n\n");
-            Log.d(TAG, stringBuilder.toString());
-        }
     }
 
     private boolean isMyServiceRunning(Class<?> serviceClass) {
@@ -483,5 +344,91 @@ public class MapsActivity extends FragmentActivity implements
         public void onClick(View view) {
             startActivity(historyIntent);
         }
+    }
+
+    private void setAsyncTaskDatabase(Context context){
+        startTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
+            @Override
+            public void insertUserResponse() {
+                Log.d(TAG, "Start runner");
+                if (!isMyServiceRunning(GpsService.class)) startService(gpsService);
+                rectOptions = new PolylineOptions();
+                registerReceiver(broadcastReceiver, intentFilter);
+                handler.postDelayed(runnable, 1000);
+            }
+            @Override
+            public void getUserResponse(User user) {}
+            @Override
+            public void getAllResponse(List<User> users) {}
+            @Override
+            public void updateResponse() {}
+        });
+
+        stopTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
+            @Override
+            public void insertUserResponse() {
+            }
+            @Override
+            public void getUserResponse(User userResponse) {
+                user = userResponse;
+                Log.d(TAG, "Stop runner: ");
+                if (user.getLatitude().size() < 10) buildAlertMessageShortTrack();
+                else {
+                    detailsIntent.putExtra(DetailsActivity.IntentTag, user.getId());
+                    startActivity(detailsIntent);
+                }
+            }
+            @Override
+            public void getAllResponse(List<User> users) {}
+            @Override
+            public void updateResponse() {}
+        });
+
+        contiuneTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
+            @Override
+            public void insertUserResponse() {}
+
+            @Override
+            public void getUserResponse(User userReponse) {
+                user = userReponse;
+                Log.d(TAG, "Conutune runner: ");
+                countAvgSpeed();
+                rectOptions = new PolylineOptions();
+                for (int i = 0; i < user.getLatitude().size() - 1; i++) {
+                    latLng = new LatLng(user.getLatitude().get(i), user.getLongitude().get(i));
+                    rectOptions.add(latLng);
+                }
+                registerReceiver(broadcastReceiver, intentFilter);
+                if (!isMyServiceRunning(GpsService.class)) startService(gpsService);
+                userStartTime = user.getStart_time();
+                handler.postDelayed(runnable, 1000);
+            }
+            @Override
+            public void getAllResponse(List<User> users) {}
+            @Override
+            public void updateResponse() {}
+        });
+
+        drawGuiTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
+            @Override
+            public void insertUserResponse() {}
+            @Override
+            public void getUserResponse(User userResponse) {
+                user = userResponse;
+                drawRoute(user.getLastLatitude(), user.getLastLongitude());
+                distance = user.getDistance();
+                textViewDistance.setText(String.format("%.2f", distance / 1000));
+                speed = user.getLastSpeed();
+                textViewSpeed.setText(String.format("%.2f", speed));
+                countAvgSpeed();
+                textViewAvgSpeed.setText(String.format("%.2f", avgSpeed));
+                if (speed < 30) mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+                else mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13));
+            }
+            @Override
+            public void getAllResponse(List<User> usersResponse) {}
+            @Override
+            public void updateResponse() {}
+        });
     }
 }
