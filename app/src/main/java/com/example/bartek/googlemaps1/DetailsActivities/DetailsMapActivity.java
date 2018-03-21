@@ -1,9 +1,16 @@
 package com.example.bartek.googlemaps1.DetailsActivities;
 
 import android.arch.persistence.room.Room;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.example.bartek.googlemaps1.Database.AppDatabase;
 import com.example.bartek.googlemaps1.Database.User;
@@ -12,76 +19,106 @@ import com.example.bartek.googlemaps1.R;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-public class DetailsMapActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class DetailsMapActivity extends Fragment {
 
     public static final String TAG = "DetailsMapsActivity";
     private User user;
     private UserDao userDao;
     private int userID;
     private GoogleMap mMap;
+    private MapView mMapView;
     private PolylineOptions rectOptions;
     private LatLng latLng;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_details_map);
 
-        initializeDetailsActivity();
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.fragmentInfo);
-        mapFragment.getMapAsync(this);
+    public static DetailsMapActivity newInstance(int userID){
+        DetailsMapActivity fragmentMaps = new DetailsMapActivity();
+        Bundle args = new Bundle();
+        args.putInt("userID", userID);
+        fragmentMaps.setArguments(args);
+        return fragmentMaps;
     }
 
-    private void initializeDetailsActivity() {
-        AppDatabase db = Room.databaseBuilder(getApplicationContext(),
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        userID = getArguments().getInt("userID", 1);
+    }
+
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.activity_details_map, container,false);
+
+        mMapView = (MapView) view.findViewById(R.id.map);
+        mMapView.onCreate(savedInstanceState);
+        mMapView.onResume();
+
+        initializeDetailsMaps();
+
+        try {
+            MapsInitializer.initialize(getActivity().getApplicationContext());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        mMapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                mMap = googleMap;
+
+                mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        marker.showInfoWindow();
+                        return true;
+                    }
+                });
+
+                mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+                    @Override
+                    public void onMapLoaded() {
+                        mMap.getUiSettings().setScrollGesturesEnabled(false);
+                        mMap.getUiSettings().setZoomGesturesEnabled(false);
+                        if(user.getLatitude().size() > 2){
+                            addMarkers();
+                            drawRoute();
+                            boundsBulider();
+                        }
+
+                    }
+                });
+
+            }
+        });
+        return view;
+    }
+
+    private void initializeDetailsMaps() {
+        AppDatabase db = Room.databaseBuilder(getContext(),
                 AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
         userDao = db.userDao();
         loadUser();
     }
 
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                marker.showInfoWindow();
-                return true;
-            }
-        });
-
-        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-            @Override
-            public void onMapLoaded() {
-                mMap.getUiSettings().setScrollGesturesEnabled(false);
-                mMap.getUiSettings().setZoomGesturesEnabled(false);
-                if(user.getLatitude().size() > 2){
-                    addMarkers();
-                    drawRoute();
-                    boundsBulider();
-                }
-
-            }
-        });
-    }
-
     private void loadUser() {
         user = new User();
-        userID = getIntent().getIntExtra(IntentTag, 1);
         user = userDao.getById(userID);
-        Log.d(TAG, "loadUser: " + user.getId());
     }
 
     private void boundsBulider(){
@@ -113,4 +150,31 @@ public class DetailsMapActivity extends AppCompatActivity implements OnMapReadyC
         startMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
         startMarker.showInfoWindow();
     }
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mMapView.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mMapView.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mMapView.onDestroy();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mMapView.onLowMemory();
+    }
+
+
 }

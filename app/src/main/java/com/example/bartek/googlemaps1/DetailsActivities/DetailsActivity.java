@@ -1,7 +1,6 @@
 package com.example.bartek.googlemaps1.DetailsActivities;
 
 
-import android.app.FragmentManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -13,12 +12,14 @@ public class DetailsActivity extends AppCompatActivity {
     private static final String TAG = "DetailsActivity";
     public static final String IntentTag = "userid";
     private FragmentPagerAdapter fragmentPagerAdapter;
+    private static int userID;
 
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        userID = getIntent().getIntExtra(IntentTag, 0);
         setContentView(R.layout.activity_details);
         ViewPager viewPager = (ViewPager) findViewById(R.id.vpPager);
         fragmentPagerAdapter = new detailsPagerAdapter(getSupportFragmentManager());
@@ -52,9 +53,9 @@ public class DetailsActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             switch (position){
                 case 0:
-                    //return FirstFragment.newInstance(0, "Page # 1");
+                    return DetailsMapActivity.newInstance(userID);
                 case 1:
-                    return DetailsMapActivity.newInstance(2, "Page # 3");
+                    return DetailsMapActivity.newInstance(userID);
                 default: return null;
             }
         }
@@ -62,6 +63,17 @@ public class DetailsActivity extends AppCompatActivity {
         @Override
         public int getCount() {
             return NUM_ITEMS;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            switch (position){
+                case 0:
+                    return "Info";
+                case 1:
+                    return "Map";
+                default: return "Info";
+            }
         }
     }
 }
