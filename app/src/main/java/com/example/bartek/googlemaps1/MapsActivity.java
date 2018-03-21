@@ -27,6 +27,7 @@ import com.example.bartek.googlemaps1.Database.AppDatabase;
 import com.example.bartek.googlemaps1.Database.User;
 import com.example.bartek.googlemaps1.Database.UserDao;
 import com.example.bartek.googlemaps1.DetailsActivities.DetailsActivity;
+import com.example.bartek.googlemaps1.HistoryActivity.HistoryActivity;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -67,6 +68,7 @@ public class MapsActivity extends FragmentActivity implements
     private Intent gpsService, historyIntent, detailsIntent;
     private BroadcastReceiver broadcastReceiver;
     private LocationManager manager;
+    private AsyncTaskDatabase asyncTaskDatabase;
 
 
     @Override
@@ -88,6 +90,8 @@ public class MapsActivity extends FragmentActivity implements
         bStartStop.setOnClickListener(new bStartStopClick());
         bHistory.setOnClickListener(new bHistoryClick());
 
+        asyncTaskDatabase = new AsyncTaskDatabase(getApplicationContext());
+
         initializeMapsActivity();
         broadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -95,7 +99,7 @@ public class MapsActivity extends FragmentActivity implements
                 try {
                     setGUI();
                 } catch (Exception e) {
-                    Log.i(TAG, "SetGUI err");
+                    Log.i(TAG, " "+e.getMessage());
                 }
             }
         };
@@ -103,7 +107,7 @@ public class MapsActivity extends FragmentActivity implements
 
     private void initializeMapsActivity() {
         AppDatabase db = Room.databaseBuilder(getApplicationContext(),
-                AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
+                AppDatabase.class, "database-name").allowMainThreadQueries().fallbackToDestructiveMigration().build();
         userDao = db.userDao();
         gpsService = new Intent(this, GpsService.class);
         historyIntent = new Intent(this, HistoryActivity.class);
@@ -144,7 +148,8 @@ public class MapsActivity extends FragmentActivity implements
         userStartTime = Calendar.getInstance().getTimeInMillis();
         user.setStart_time(userStartTime);
         user.setEnd_time(userStartTime);
-        userDao.insert(user);
+        asyncTaskDatabase.inserUser(user);
+        //userDao.insert(user);
         if (!isMyServiceRunning(GpsService.class)) startService(gpsService);
         rectOptions = new PolylineOptions();
         registerReceiver(broadcastReceiver, intentFilter);
@@ -170,8 +175,8 @@ public class MapsActivity extends FragmentActivity implements
         } catch (Exception e) {
             Log.i(TAG, "can't remove callbacks");
         }
-        appLog();
-        user = userDao.getUser();
+        //appLog();
+        user = asyncTaskDatabase.getUser();
         saveState();
         if (user.getLatitude().size() < 10) buildAlertMessageShortTrack();
         else {
@@ -184,7 +189,7 @@ public class MapsActivity extends FragmentActivity implements
         runnerisStarted = true;
         bStartStop.setText("Stop");
         user = new User();
-        user = userDao.getUser();
+        user = asyncTaskDatabase.getUser();
 
         countAvgSpeed();
 
@@ -214,7 +219,7 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     private void setGUI() {
-        user = userDao.getUser();
+        user = asyncTaskDatabase.getUser();
         drawRoute(user.getLastLatitude(), user.getLastLongitude());
         distance = user.getDistance();
         textViewDistance.setText(String.format("%.2f", distance / 1000));
@@ -300,8 +305,9 @@ public class MapsActivity extends FragmentActivity implements
         saveState();
     }
 
+
     private void appLog() {
-        users = userDao.getAll();
+        //users = asyncTaskDatabase.getAll();
         for (int i = 0; i < users.size(); i++) {
             StringBuilder stringBuilder = new StringBuilder();
             double speed = 0.0;

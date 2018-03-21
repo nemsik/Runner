@@ -100,10 +100,8 @@ public class DetailsMapActivity extends Fragment {
                             drawRoute();
                             boundsBulider();
                         }
-
                     }
                 });
-
             }
         });
         return view;

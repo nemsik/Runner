@@ -1,8 +1,9 @@
-package com.example.bartek.googlemaps1;
+package com.example.bartek.googlemaps1.HistoryActivity;
 
 import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,15 +11,17 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.example.bartek.googlemaps1.AsyncTaskDatabase;
 import com.example.bartek.googlemaps1.Database.AppDatabase;
 import com.example.bartek.googlemaps1.Database.User;
 import com.example.bartek.googlemaps1.Database.UserDao;
 import com.example.bartek.googlemaps1.DetailsActivities.DetailsActivity;
+import com.example.bartek.googlemaps1.R;
 
 import java.util.Collections;
 import java.util.List;
 
-public class HistoryActivity extends AppCompatActivity {
+public class HistoryActivity extends AppCompatActivity implements AsyncTaskDatabase.AsyncResponse {
 
     private static final String TAG = "HistoryActivity";
 
@@ -30,6 +33,9 @@ public class HistoryActivity extends AppCompatActivity {
     private UserDao userDao;
 
     AppDatabase db;
+
+    AsyncTaskDatabase asyncTaskDatabase;
+    List<User> userList;
 
 
     @Override
@@ -43,7 +49,12 @@ public class HistoryActivity extends AppCompatActivity {
 
         userDao = db.userDao();
 
-        final List<User> userList = userDao.getAll();
+        //asyncTaskDatabase = new AsyncTaskDatabase(context);
+        //asyncTaskDatabase.delegate = this;
+        //asyncTaskDatabase.getAll();
+
+        userList = userDao.getAll();
+
         Collections.reverse(userList);
         Log.d(TAG, "onCreate: " + userList.toString());
 
@@ -60,5 +71,18 @@ public class HistoryActivity extends AppCompatActivity {
             }
         });
 
+
+    }
+
+
+
+
+
+
+    @Override
+    public void processFinish(User user) {
+        Log.d(TAG, "processFinish: ");
+        Log.d(TAG, "processFinish: " + user.getStart_time());
     }
 }
+

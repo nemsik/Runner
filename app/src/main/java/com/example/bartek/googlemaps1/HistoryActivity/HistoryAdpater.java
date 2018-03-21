@@ -1,4 +1,4 @@
-package com.example.bartek.googlemaps1;
+package com.example.bartek.googlemaps1.HistoryActivity;
 
 import android.content.Context;
 import android.util.Log;
@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.bartek.googlemaps1.Database.User;
+import com.example.bartek.googlemaps1.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

@@ -44,6 +44,7 @@ public class GpsService extends Service {
     private Location mLastLocation;
     private NotificationCompat.Builder nofificationBuilder;
     private NotificationManager notificationManager;
+    private AsyncTaskDatabase asyncTaskDatabase;
 
     private class LocationListener implements android.location.LocationListener {
 
@@ -68,7 +69,8 @@ public class GpsService extends Service {
                 speed *= 3.6;
                 Log.e(TAG, "onLocationChanged: " + speed );
                 user.addSpeed(speed);
-                userDao.update(user);
+                //asyncTaskDatabase.update(user);
+                //userDao.update(user);
                 sendBroadcast(intent);
             }
         }
@@ -109,6 +111,7 @@ public class GpsService extends Service {
     @Override
     public void onCreate() {
         Log.e(TAG, "onCreate");
+        asyncTaskDatabase = new AsyncTaskDatabase(getApplicationContext());
         intent = new Intent().setAction(MapsActivity.Filter);
         initializeLocationManager();
         try {
@@ -135,7 +138,7 @@ public class GpsService extends Service {
         userDao = db.userDao();
         user = userDao.getUser();
 
-        buildNotification();
+
     }
 
 

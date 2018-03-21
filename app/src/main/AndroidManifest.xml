@@ -44,7 +44,7 @@
             android:name=".GpsService"
             android:process=":my_service" />
 
-        <activity android:name=".HistoryActivity" />
+        <activity android:name=".HistoryActivity.HistoryActivity" />
         <activity android:name=".DetailsActivities.DetailsActivity" />
         <activity android:name=".DetailsActivities.DetailsMapActivity"></activity>
     </application>

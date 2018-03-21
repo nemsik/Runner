@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.bartek.googlemaps1.HistoryActivity">
+    tools:context="com.example.bartek.googlemaps1.HistoryActivity.HistoryActivity">
 
     <ListView
         android:id="@+id/listview"
