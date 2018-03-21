@@ -18,7 +18,10 @@ import java.util.List;
 public class AsyncTaskDatabase{
 
     public interface AsyncResponse {
-        void processFinish(User user);
+        void insertUserResponse();
+        void getUserResponse(User user);
+        void getAllResponse(List<User> users);
+        void updateResponse();
     }
 
     public final static String TAG = "AsyncTaskDatabase";
@@ -30,8 +33,9 @@ public class AsyncTaskDatabase{
 
 
 
-    public AsyncTaskDatabase(Context context){
+    public AsyncTaskDatabase(Context context, AsyncResponse delegate){
         this.context = context;
+        this.delegate = delegate;
         AppDatabase db = Room.databaseBuilder(context,
                 AppDatabase.class, "database-name").fallbackToDestructiveMigration().build();
         userDao = db.userDao();
@@ -39,49 +43,61 @@ public class AsyncTaskDatabase{
 
     public void inserUser(final User user){
         new AsyncTask<User, Void, Void>(){
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
 
             @Override
             protected Void doInBackground(User... users) {
                 userDao.insert(user);
                 return null;
             }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                delegate.insertUserResponse();
+            }
         }.execute();
     }
 
-    public User getUser(){
-        new AsyncTask<Void, Void, User>(){
+    public void getUser() {
+        new AsyncTask<Void, Void, User>() {
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+            }
+
             @Override
             protected User doInBackground(Void... voids) {
-                user = userDao.getUser();
-                return null;
+                return userDao.getUser();
             }
 
             @Override
             protected void onPostExecute(User user) {
-                super.onPostExecute(user);
+                delegate.getUserResponse(user);
             }
         }.execute();
-        return user;
     }
 
-    //todo
 
     public void getAll(){
-        new AsyncTask<Void, Void, User>(){
+        new AsyncTask<Void, Void, List<User>>(){
             @Override
-            protected User doInBackground(Void... voids) {
-                userDao.getUser();
-                return null;
+            protected void onPreExecute() {
+                super.onPreExecute();
             }
 
             @Override
-            protected void onPostExecute(User user) {
-                //super.onPostExecute(user);
-                //callback.finish(users);
-                delegate.processFinish(user);
+            protected List<User> doInBackground(Void... voids) {
+                return userDao.getAll();
+            }
+
+            @Override
+            protected void onPostExecute(List<User> users) {
+                delegate.getAllResponse(users);
             }
         }.execute();
-
     }
 
     private void update(final User user){
@@ -94,7 +110,7 @@ public class AsyncTaskDatabase{
 
             @Override
             protected void onPostExecute(Void aVoid) {
-                super.onPostExecute(aVoid);
+                delegate.updateResponse();
             }
         }.execute();
     }

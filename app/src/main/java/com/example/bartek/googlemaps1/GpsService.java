@@ -111,7 +111,7 @@ public class GpsService extends Service {
     @Override
     public void onCreate() {
         Log.e(TAG, "onCreate");
-        asyncTaskDatabase = new AsyncTaskDatabase(getApplicationContext());
+        //asyncTaskDatabase = new AsyncTaskDatabase(getApplicationContext());
         intent = new Intent().setAction(MapsActivity.Filter);
         initializeLocationManager();
         try {

@@ -90,7 +90,7 @@ public class MapsActivity extends FragmentActivity implements
         bStartStop.setOnClickListener(new bStartStopClick());
         bHistory.setOnClickListener(new bHistoryClick());
 
-        asyncTaskDatabase = new AsyncTaskDatabase(getApplicationContext());
+        //asyncTaskDatabase = new AsyncTaskDatabase();
 
         initializeMapsActivity();
         broadcastReceiver = new BroadcastReceiver() {

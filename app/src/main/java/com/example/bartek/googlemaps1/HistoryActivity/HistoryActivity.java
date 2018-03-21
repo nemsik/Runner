@@ -24,43 +24,25 @@ import java.util.List;
 public class HistoryActivity extends AppCompatActivity implements AsyncTaskDatabase.AsyncResponse {
 
     private static final String TAG = "HistoryActivity";
-
     private Context context;
     private ListView listView;
     private HistoryAdpater adpater;
-
-    private User user;
-    private UserDao userDao;
-
-    AppDatabase db;
-
     AsyncTaskDatabase asyncTaskDatabase;
     List<User> userList;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
         context = getApplicationContext();
+        asyncTaskDatabase = new AsyncTaskDatabase(context, this);
+        asyncTaskDatabase.getAll();
 
-        db = Room.databaseBuilder(getApplicationContext(),
-                AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
+    }
 
-        userDao = db.userDao();
-
-        //asyncTaskDatabase = new AsyncTaskDatabase(context);
-        //asyncTaskDatabase.delegate = this;
-        //asyncTaskDatabase.getAll();
-
-        userList = userDao.getAll();
-
-        Collections.reverse(userList);
-        Log.d(TAG, "onCreate: " + userList.toString());
-
-
-        listView = (ListView)findViewById(R.id.listview);
-        adpater = new HistoryAdpater(context, R.layout.historyadapter,userList);
+    private void setGui() {
+        listView = (ListView) findViewById(R.id.listview);
+        adpater = new HistoryAdpater(context, R.layout.historyadapter, userList);
         listView.setAdapter(adpater);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -70,19 +52,28 @@ public class HistoryActivity extends AppCompatActivity implements AsyncTaskDatab
                 startActivity(detailsActivity);
             }
         });
+    }
 
+    @Override
+    public void insertUserResponse() {
 
     }
 
+    @Override
+    public void getUserResponse(User user) {
 
-
-
-
+    }
 
     @Override
-    public void processFinish(User user) {
-        Log.d(TAG, "processFinish: ");
-        Log.d(TAG, "processFinish: " + user.getStart_time());
+    public void getAllResponse(List<User> users) {
+        userList = users;
+        Collections.reverse(userList);
+        setGui();
+    }
+
+    @Override
+    public void updateResponse() {
+
     }
 }
 
