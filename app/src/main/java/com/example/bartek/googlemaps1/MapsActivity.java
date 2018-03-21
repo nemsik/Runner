@@ -70,7 +70,6 @@ public class MapsActivity extends FragmentActivity implements
     private Context context;
     private AsyncTaskDatabase startTask, stopTask, contiuneTask, drawGuiTask, deleteTask;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -136,7 +135,7 @@ public class MapsActivity extends FragmentActivity implements
     }
 
     private void startRunner() {
-        if (!permissionGranted) return;
+        if (!checkPermissions()) return;
         userSpeed = new ArrayList<>();
         runnerisStarted = true;
         bStartStop.setText("Stop");
@@ -406,7 +405,6 @@ public class MapsActivity extends FragmentActivity implements
             public void getAllResponse(List<User> users) {}
             @Override
             public void updateResponse() {}
-
             @Override
             public void deleteRsponde() {}
         });
