@@ -100,7 +100,7 @@ public class AsyncTaskDatabase{
         }.execute();
     }
 
-    private void update(final User user){
+    public void update(final User user){
         new AsyncTask<User, Void, Void>(){
             @Override
             protected Void doInBackground(User... users) {

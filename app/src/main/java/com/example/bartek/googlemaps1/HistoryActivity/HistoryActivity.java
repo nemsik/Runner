@@ -27,8 +27,8 @@ public class HistoryActivity extends AppCompatActivity implements AsyncTaskDatab
     private Context context;
     private ListView listView;
     private HistoryAdpater adpater;
-    AsyncTaskDatabase asyncTaskDatabase;
-    List<User> userList;
+    private AsyncTaskDatabase asyncTaskDatabase;
+    private List<User> userList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -25,19 +25,18 @@ import com.example.bartek.googlemaps1.Database.UserDao;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Created by bartek on 14.03.2018.
  */
 
-public class GpsService extends Service {
+public class GpsService extends Service implements AsyncTaskDatabase.AsyncResponse {
     private static final String TAG = "GpsService";
     private LocationManager mLocationManager = null;
     private static final int LOCATION_INTERVAL = 2000;
     private static final float LOCATION_DISTANCE = 10f;
-    private UserDao userDao;
-    private User user;
     private Intent intent;
     private double speed;
     private long time;
@@ -45,6 +44,30 @@ public class GpsService extends Service {
     private NotificationCompat.Builder nofificationBuilder;
     private NotificationManager notificationManager;
     private AsyncTaskDatabase asyncTaskDatabase;
+    private User user;
+
+    @Override
+    public void getUserResponse(User user) {
+        this.user = user;
+        try {
+            mLocationManager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
+                    mLocationListeners[1]);
+        } catch (SecurityException ex) {
+            Log.i(TAG, "fail to request location update, ignore", ex);
+        } catch (IllegalArgumentException ex) {
+            Log.d(TAG, "network provider does not exist, " + ex.getMessage());
+        }
+        try {
+            mLocationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
+                    mLocationListeners[0]);
+        } catch (SecurityException ex) {
+            Log.i(TAG, "fail to request location update, ignore", ex);
+        } catch (IllegalArgumentException ex) {
+            Log.d(TAG, "gps provider does not exist " + ex.getMessage());
+        }
+    }
 
     private class LocationListener implements android.location.LocationListener {
 
@@ -69,9 +92,7 @@ public class GpsService extends Service {
                 speed *= 3.6;
                 Log.e(TAG, "onLocationChanged: " + speed );
                 user.addSpeed(speed);
-                //asyncTaskDatabase.update(user);
-                //userDao.update(user);
-                sendBroadcast(intent);
+                asyncTaskDatabase.update(user);
             }
         }
 
@@ -111,34 +132,11 @@ public class GpsService extends Service {
     @Override
     public void onCreate() {
         Log.e(TAG, "onCreate");
-        //asyncTaskDatabase = new AsyncTaskDatabase(getApplicationContext());
         intent = new Intent().setAction(MapsActivity.Filter);
+        asyncTaskDatabase = new AsyncTaskDatabase(getApplicationContext(), this);
+        asyncTaskDatabase.getUser();
         initializeLocationManager();
-        try {
-            mLocationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
-                    mLocationListeners[1]);
-        } catch (SecurityException ex) {
-            Log.i(TAG, "fail to request location update, ignore", ex);
-        } catch (IllegalArgumentException ex) {
-            Log.d(TAG, "network provider does not exist, " + ex.getMessage());
-        }
-        try {
-            mLocationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
-                    mLocationListeners[0]);
-        } catch (SecurityException ex) {
-            Log.i(TAG, "fail to request location update, ignore", ex);
-        } catch (IllegalArgumentException ex) {
-            Log.d(TAG, "gps provider does not exist " + ex.getMessage());
-        }
-
-        AppDatabase db = Room.databaseBuilder(getApplicationContext(),
-                AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
-        userDao = db.userDao();
-        user = userDao.getUser();
-
-
+        buildNotification();
     }
 
 
@@ -186,5 +184,14 @@ public class GpsService extends Service {
         notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(1, nofificationBuilder.build());
     }
+
+    @Override
+    public void insertUserResponse() {}
+
+    @Override
+    public void getAllResponse(List<User> users) {}
+
+    @Override
+    public void updateResponse() {sendBroadcast(intent);}
 
 }
