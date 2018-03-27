@@ -46,7 +46,8 @@
 
         <activity android:name=".HistoryActivity.HistoryActivity" />
         <activity android:name=".DetailsActivities.DetailsActivity" />
-        <activity android:name=".DetailsActivities.DetailsMapActivity"></activity>
+        <activity android:name=".DetailsActivities.DetailsMapActivity" />
+        <activity android:name=".DetailsActivities.DetailsInfoActivity"></activity>
     </application>
 
 </manifest>

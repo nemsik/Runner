@@ -53,7 +53,7 @@ public class DetailsActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             switch (position){
                 case 0:
-                    return DetailsMapActivity.newInstance(userID);
+                    return DetailsInfoActivity.newInstance(userID);
                 case 1:
                     return DetailsMapActivity.newInstance(userID);
                 default: return null;

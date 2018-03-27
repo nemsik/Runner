@@ -68,6 +68,6 @@ public class HistoryActivity extends AppCompatActivity implements AsyncTaskDatab
     @Override
     public void updateResponse() {}
     @Override
-    public void deleteRsponde() {}
+    public void deleteRsponse() {}
 }
 

@@ -35,8 +35,8 @@ import java.util.Map;
 public class GpsService extends Service implements AsyncTaskDatabase.AsyncResponse {
     private static final String TAG = "GpsService";
     private LocationManager mLocationManager = null;
-    private static final int LOCATION_INTERVAL = 2000;
-    private static final float LOCATION_DISTANCE = 10f;
+    private static final int LOCATION_INTERVAL = 1000;
+    private static final float LOCATION_DISTANCE = 5f;
     private Intent intent;
     private double speed;
     private long time;
@@ -195,7 +195,7 @@ public class GpsService extends Service implements AsyncTaskDatabase.AsyncRespon
     public void updateResponse() {sendBroadcast(intent);}
 
     @Override
-    public void deleteRsponde() {
+    public void deleteRsponse() {
 
     }
 

@@ -357,7 +357,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void updateResponse() {}
             @Override
-            public void deleteRsponde() {}
+            public void deleteRsponse() {}
         });
 
         stopTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
@@ -379,7 +379,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void updateResponse() {}
             @Override
-            public void deleteRsponde() {}
+            public void deleteRsponse() {}
         });
 
         contiuneTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
@@ -406,7 +406,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void updateResponse() {}
             @Override
-            public void deleteRsponde() {}
+            public void deleteRsponse() {}
         });
 
         drawGuiTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
@@ -430,7 +430,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void updateResponse() {}
             @Override
-            public void deleteRsponde() {}
+            public void deleteRsponse() {}
         });
 
         deleteTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
@@ -443,7 +443,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void updateResponse() {}
             @Override
-            public void deleteRsponde() {}
+            public void deleteRsponse() {}
         });
     }
 }
