@@ -1,8 +1,10 @@
 package com.example.bartek.googlemaps1.DetailsActivities;
 
+import android.graphics.Color;
 import android.support.v4.app.Fragment;
 import android.support.annotation.Nullable;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,12 +15,18 @@ import com.example.bartek.googlemaps1.Database.User;
 import com.example.bartek.googlemaps1.R;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.formatter.IFillFormatter;
+import com.github.mikephil.charting.interfaces.dataprovider.LineDataProvider;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 
 import java.text.SimpleDateFormat;
@@ -35,6 +43,8 @@ public class DetailsInfoActivity extends Fragment implements AsyncTaskDatabase.A
     private AsyncTaskDatabase asyncTaskDatabase;
     private ArrayList<Double> userSpeeds;
     private LineChart lineChart;
+    double difftime;
+    private String text;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -64,11 +74,6 @@ public class DetailsInfoActivity extends Fragment implements AsyncTaskDatabase.A
 
         lineChart = (LineChart) view.findViewById(R.id.barChart) ;
 
-
-
-
-
-
         asyncTaskDatabase = new AsyncTaskDatabase(getContext(), this);
         asyncTaskDatabase.getUserById(userID);
 
@@ -80,13 +85,12 @@ public class DetailsInfoActivity extends Fragment implements AsyncTaskDatabase.A
         Log.d(TAG, "getUserResponse: " + userResponse.toString());
 
         userSpeeds = userResponse.getSpeed();
-
-        drawChart();
+        Log.d(TAG, "size userspeed" + userSpeeds.size());
 
         Calendar calendar;
         calendar = Calendar.getInstance();
 
-        double difftime = (userResponse.getEnd_time() - userResponse.getStart_time()) / 1000;
+        difftime = (userResponse.getEnd_time() - userResponse.getStart_time()) / 1000;
         double distance = userResponse.getDistance();
 
         calendar.setTimeInMillis(userResponse.getStart_time());
@@ -102,14 +106,15 @@ public class DetailsInfoActivity extends Fragment implements AsyncTaskDatabase.A
         seconds %= 60;
         minutes %= 60;
         hours %= 60;
-        TextViewTime.setText(String.format("%02d", hours) + ":" + String.format("%02d", minutes) + ":" + String.format("%02d", seconds));
-
-        ArrayList<Double> speeds = userResponse.getSpeed();
+        text = String.format("%02d", hours) + ":" + String.format("%02d", minutes) + ":" + String.format("%02d", seconds);
+        TextViewTime.setText(text);
         double maxSpeed = 0;
-        for(int i=0; i<speeds.size(); i++) if(speeds.get(i) > maxSpeed) maxSpeed = speeds.get(i);
+        for(int i=0; i<userSpeeds.size(); i++) if(userSpeeds.get(i) > maxSpeed) maxSpeed = userSpeeds.get(i);
         TextViewMaxSpeed.setText(String.format("%.2f", maxSpeed) + " km/h");
         TextViewAvgSpeed.setText(String.format("%.2f", (distance/difftime) * 3.6) + " km/h");
         TextViewDistance.setText(String.format("%.2f", userResponse.getDistance()/1000) + " km");
+
+        drawChart();
     }
 
     private void drawChart(){
@@ -120,17 +125,33 @@ public class DetailsInfoActivity extends Fragment implements AsyncTaskDatabase.A
             entries.add(new BarEntry(i, fspeed));
         }
 
+
         LineDataSet dataset = new LineDataSet(entries, "# of Calls");
         dataset.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        dataset.setDrawValues(false);
+        dataset.setCubicIntensity(0.1f);
+        dataset.setDrawFilled(true);
         dataset.setDrawCircles(false);
-        dataset.setDrawCircleHole(false);
+        dataset.setLineWidth(4.8f);
+        dataset.setColor(Color.RED);
+        dataset.setFillColor(Color.RED);
+        dataset.setFillAlpha(100);
+        dataset.setDrawHorizontalHighlightIndicator(true);
+        dataset.setDrawValues(false);
+        lineChart.getAxisLeft().setDrawLabels(true);
+        lineChart.getAxisRight().setDrawLabels(false);
+        lineChart.getXAxis().setDrawLabels(false);
+
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setAxisMinimum(0);
+        xAxis.setAxisMaximum(userSpeeds.size()-1); // because there are 250 data points
+        xAxis.setLabelCount(userSpeeds.size()-1);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+
+        lineChart.getLegend().setEnabled(false);
 
         LineData data = new LineData(dataset);
         lineChart.setData(data);
-
         lineChart.notifyDataSetChanged();
-
     }
 
 
@@ -144,5 +165,5 @@ public class DetailsInfoActivity extends Fragment implements AsyncTaskDatabase.A
     public void updateResponse() {}
 
     @Override
-    public void deleteRsponse() {}
+    public void deleteResponse() {}
 }

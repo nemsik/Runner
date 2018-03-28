@@ -11,7 +11,7 @@ import android.content.Context;
  */
 
 @Database(entities = {User.class}, version = 3)
-@TypeConverters({Converters.class, LocConverters.class})
+@TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
     public abstract UserDao userDao();
 }

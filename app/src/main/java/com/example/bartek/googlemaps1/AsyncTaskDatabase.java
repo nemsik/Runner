@@ -22,7 +22,7 @@ public class AsyncTaskDatabase{
         void getUserResponse(User userResponse);
         void getAllResponse(List<User> usersResponse);
         void updateResponse();
-        void deleteRsponse();
+        void deleteResponse();
     }
 
     public final static String TAG = "AsyncTaskDatabase";
@@ -48,19 +48,22 @@ public class AsyncTaskDatabase{
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
+                Log.d(TAG, "onPreExecute: insert user");
             }
 
             @Override
             protected Void doInBackground(User... users) {
                 userDao.insert(user);
+                Log.d(TAG, "doInBackground: insert user");
                 return null;
             }
 
             @Override
             protected void onPostExecute(Void aVoid) {
+                Log.d(TAG, "onPostExecute: insert user");
                 delegate.insertUserResponse();
             }
-        }.execute();
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     public void getUser() {
@@ -68,18 +71,21 @@ public class AsyncTaskDatabase{
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
+                Log.d(TAG, "onPreExecute: getUser");
             }
 
             @Override
             protected User doInBackground(Void... voids) {
+                Log.d(TAG, "doInBackground: getUser");
                 return userDao.getUser();
             }
 
             @Override
             protected void onPostExecute(User user) {
+                Log.d(TAG, "onPostExecute: getUser");
                 delegate.getUserResponse(user);
             }
-        }.execute();
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
 
@@ -99,22 +105,30 @@ public class AsyncTaskDatabase{
             protected void onPostExecute(List<User> users) {
                 delegate.getAllResponse(users);
             }
-        }.execute();
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     public void update(final User user){
         new AsyncTask<User, Void, Void>(){
             @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                Log.d(TAG, "onPreExecute: update user");
+            }
+
+            @Override
             protected Void doInBackground(User... users) {
+                Log.d(TAG, "doInBackground: update user");
                 userDao.update(user);
                 return null;
             }
 
             @Override
             protected void onPostExecute(Void aVoid) {
+                Log.d(TAG, "onPostExecute: update user");
                 delegate.updateResponse();
             }
-        }.execute();
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     public void delete(final User user){
@@ -126,7 +140,7 @@ public class AsyncTaskDatabase{
 
             @Override
             protected void onPostExecute(Void aVoid) {
-                delegate.deleteRsponse();
+                delegate.deleteResponse();
             }
 
             @Override
@@ -134,7 +148,7 @@ public class AsyncTaskDatabase{
                 userDao.delete(user);
                 return null;
             }
-        }.execute();
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     public void getUserById(final int id){
@@ -142,14 +156,12 @@ public class AsyncTaskDatabase{
             @Override
             protected User doInBackground(Integer... integers) {
                 return userDao.getById(id);
-                //return null;
             }
 
             @Override
             protected void onPostExecute(User user) {
                 delegate.getUserResponse(user);
             }
-        }.execute();
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
-
 }

@@ -4,29 +4,19 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.SystemClock;
-import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-
-import com.example.bartek.googlemaps1.Database.AppDatabase;
 import com.example.bartek.googlemaps1.Database.User;
 import com.example.bartek.googlemaps1.Database.UserDao;
-
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by bartek on 14.03.2018.
@@ -36,7 +26,7 @@ public class GpsService extends Service implements AsyncTaskDatabase.AsyncRespon
     private static final String TAG = "GpsService";
     private LocationManager mLocationManager = null;
     private static final int LOCATION_INTERVAL = 1000;
-    private static final float LOCATION_DISTANCE = 5f;
+    private static final float LOCATION_DISTANCE = 10f;
     private Intent intent;
     private double speed;
     private long time;
@@ -45,12 +35,15 @@ public class GpsService extends Service implements AsyncTaskDatabase.AsyncRespon
     private NotificationManager notificationManager;
     private AsyncTaskDatabase asyncTaskDatabase;
     private User user;
-    private UserDao userDao;
 
 
     @Override
     public void getUserResponse(User user) {
         this.user = user;
+        if(user.getStart_time()==0) {
+            user.setStart_time(Calendar.getInstance().getTimeInMillis());
+            user.setEnd_time(Calendar.getInstance().getTimeInMillis());
+        }
         try {
             mLocationManager.requestLocationUpdates(
                     LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
@@ -83,10 +76,9 @@ public class GpsService extends Service implements AsyncTaskDatabase.AsyncRespon
         public void onLocationChanged(Location location) {
             time = Calendar.getInstance().getTimeInMillis();
             Log.e(TAG, "onLocationChanged: " + location);
-            if (mLastLocation.getLongitude() != 0 && mLastLocation.getLongitude() != 0)
-                user.addDistance(mLastLocation.distanceTo(location));
-            mLastLocation.set(location);
             if (location != null) {
+                if (mLastLocation!=null && mLastLocation.getLatitude()!=0) user.addDistance(location.distanceTo(mLastLocation));
+                mLastLocation.set(location);
                 user.setEnd_time(time);
                 user.addLatitude(location.getLatitude());
                 user.addLongitude(location.getLongitude());
@@ -95,8 +87,7 @@ public class GpsService extends Service implements AsyncTaskDatabase.AsyncRespon
                 Log.e(TAG, "onLocationChanged: " + speed );
                 user.addSpeed(speed);
                 asyncTaskDatabase.update(user);
-                user.addLocation(location);
-                userDao.update(user);
+
             }
         }
 
@@ -141,11 +132,6 @@ public class GpsService extends Service implements AsyncTaskDatabase.AsyncRespon
         asyncTaskDatabase.getUser();
         initializeLocationManager();
         buildNotification();
-
-        AppDatabase db = Room.databaseBuilder(getApplicationContext(),
-                AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
-        userDao = db.userDao();
-        user = userDao.getUser();
     }
 
 
@@ -204,7 +190,7 @@ public class GpsService extends Service implements AsyncTaskDatabase.AsyncRespon
     public void updateResponse() {sendBroadcast(intent);}
 
     @Override
-    public void deleteRsponse() {
+    public void deleteResponse() {
 
     }
 

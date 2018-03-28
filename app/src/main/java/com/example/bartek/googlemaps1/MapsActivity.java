@@ -141,8 +141,6 @@ public class MapsActivity extends FragmentActivity implements
         bStartStop.setText("Stop");
         user = new User();
         userStartTime = Calendar.getInstance().getTimeInMillis();
-        user.setStart_time(userStartTime);
-        user.setEnd_time(userStartTime);
         startTask.inserUser(user);
     }
 
@@ -357,7 +355,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void updateResponse() {}
             @Override
-            public void deleteRsponse() {}
+            public void deleteResponse() {}
         });
 
         stopTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
@@ -379,7 +377,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void updateResponse() {}
             @Override
-            public void deleteRsponse() {}
+            public void deleteResponse() {}
         });
 
         contiuneTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
@@ -406,7 +404,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void updateResponse() {}
             @Override
-            public void deleteRsponse() {}
+            public void deleteResponse() {}
         });
 
         drawGuiTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
@@ -430,7 +428,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void updateResponse() {}
             @Override
-            public void deleteRsponse() {}
+            public void deleteResponse() {}
         });
 
         deleteTask = new AsyncTaskDatabase(context, new AsyncTaskDatabase.AsyncResponse() {
@@ -443,7 +441,7 @@ public class MapsActivity extends FragmentActivity implements
             @Override
             public void updateResponse() {}
             @Override
-            public void deleteRsponse() {}
+            public void deleteResponse() {}
         });
     }
 }

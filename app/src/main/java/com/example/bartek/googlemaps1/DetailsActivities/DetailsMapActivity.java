@@ -188,7 +188,7 @@ public class DetailsMapActivity extends Fragment implements AsyncTaskDatabase.As
     }
 
     @Override
-    public void deleteRsponse() {
+    public void deleteResponse() {
 
     }
 }
