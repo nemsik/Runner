@@ -10,8 +10,8 @@ import android.content.Context;
  * Created by bartek on 13.03.2018.
  */
 
-@Database(entities = {User.class}, version = 2)
-@TypeConverters({Converters.class})
+@Database(entities = {User.class}, version = 3)
+@TypeConverters({Converters.class, LocConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
     public abstract UserDao userDao();
 }

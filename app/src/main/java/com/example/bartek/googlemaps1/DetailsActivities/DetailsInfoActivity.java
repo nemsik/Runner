@@ -11,6 +11,16 @@ import android.widget.TextView;
 import com.example.bartek.googlemaps1.AsyncTaskDatabase;
 import com.example.bartek.googlemaps1.Database.User;
 import com.example.bartek.googlemaps1.R;
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -23,6 +33,8 @@ public class DetailsInfoActivity extends Fragment implements AsyncTaskDatabase.A
 
     private TextView TextViewStartTime, TextViewEndTime, TextViewTime, TextViewMaxSpeed, TextViewAvgSpeed, TextViewDistance;
     private AsyncTaskDatabase asyncTaskDatabase;
+    private ArrayList<Double> userSpeeds;
+    private LineChart lineChart;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,6 +62,13 @@ public class DetailsInfoActivity extends Fragment implements AsyncTaskDatabase.A
         TextViewAvgSpeed = (TextView)view.findViewById(R.id.textViewInfoAvgSpeed);
         TextViewDistance = (TextView)view.findViewById(R.id.textViewInfoDistance);
 
+        lineChart = (LineChart) view.findViewById(R.id.barChart) ;
+
+
+
+
+
+
         asyncTaskDatabase = new AsyncTaskDatabase(getContext(), this);
         asyncTaskDatabase.getUserById(userID);
 
@@ -59,6 +78,10 @@ public class DetailsInfoActivity extends Fragment implements AsyncTaskDatabase.A
     @Override
     public void getUserResponse(User userResponse) {
         Log.d(TAG, "getUserResponse: " + userResponse.toString());
+
+        userSpeeds = userResponse.getSpeed();
+
+        drawChart();
 
         Calendar calendar;
         calendar = Calendar.getInstance();
@@ -88,6 +111,28 @@ public class DetailsInfoActivity extends Fragment implements AsyncTaskDatabase.A
         TextViewAvgSpeed.setText(String.format("%.2f", (distance/difftime) * 3.6) + " km/h");
         TextViewDistance.setText(String.format("%.2f", userResponse.getDistance()/1000) + " km");
     }
+
+    private void drawChart(){
+        ArrayList<Entry> entries = new ArrayList<>();
+        for(int i=0; i<userSpeeds.size(); i++){
+            double dspeed = userSpeeds.get(i);
+            float fspeed = (float) dspeed;
+            entries.add(new BarEntry(i, fspeed));
+        }
+
+        LineDataSet dataset = new LineDataSet(entries, "# of Calls");
+        dataset.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        dataset.setDrawValues(false);
+        dataset.setDrawCircles(false);
+        dataset.setDrawCircleHole(false);
+
+        LineData data = new LineData(dataset);
+        lineChart.setData(data);
+
+        lineChart.notifyDataSetChanged();
+
+    }
+
 
     @Override
     public void insertUserResponse() {}

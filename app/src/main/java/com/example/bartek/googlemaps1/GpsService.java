@@ -45,6 +45,8 @@ public class GpsService extends Service implements AsyncTaskDatabase.AsyncRespon
     private NotificationManager notificationManager;
     private AsyncTaskDatabase asyncTaskDatabase;
     private User user;
+    private UserDao userDao;
+
 
     @Override
     public void getUserResponse(User user) {
@@ -93,6 +95,8 @@ public class GpsService extends Service implements AsyncTaskDatabase.AsyncRespon
                 Log.e(TAG, "onLocationChanged: " + speed );
                 user.addSpeed(speed);
                 asyncTaskDatabase.update(user);
+                user.addLocation(location);
+                userDao.update(user);
             }
         }
 
@@ -137,6 +141,11 @@ public class GpsService extends Service implements AsyncTaskDatabase.AsyncRespon
         asyncTaskDatabase.getUser();
         initializeLocationManager();
         buildNotification();
+
+        AppDatabase db = Room.databaseBuilder(getApplicationContext(),
+                AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
+        userDao = db.userDao();
+        user = userDao.getUser();
     }
 
 

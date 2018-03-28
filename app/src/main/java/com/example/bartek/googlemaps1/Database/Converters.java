@@ -22,10 +22,9 @@ public class Converters {
     }
 
     @TypeConverter
-    public static String fromArrayLisr(ArrayList<Double> list) {
+    public static String fromArrayList(ArrayList<Double> list) {
         Gson gson = new Gson();
         String json = gson.toJson(list);
         return json;
     }
-    
 }

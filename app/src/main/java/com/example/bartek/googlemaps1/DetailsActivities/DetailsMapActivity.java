@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.example.bartek.googlemaps1.AsyncTaskDatabase;
 import com.example.bartek.googlemaps1.Database.AppDatabase;
 import com.example.bartek.googlemaps1.Database.User;
 import com.example.bartek.googlemaps1.Database.UserDao;
@@ -31,11 +32,13 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-public class DetailsMapActivity extends Fragment {
+import java.util.List;
+
+public class DetailsMapActivity extends Fragment implements AsyncTaskDatabase.AsyncResponse {
 
     public static final String TAG = "DetailsMapsActivity";
+    private AsyncTaskDatabase asyncTaskDatabase;
     private User user;
-    private UserDao userDao;
     private int userID;
     private GoogleMap mMap;
     private MapView mMapView;
@@ -57,6 +60,8 @@ public class DetailsMapActivity extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         userID = getArguments().getInt("userID", 1);
+        asyncTaskDatabase = new AsyncTaskDatabase(getContext(), this);
+        asyncTaskDatabase.getUserById(userID);
     }
 
 
@@ -69,55 +74,9 @@ public class DetailsMapActivity extends Fragment {
         mMapView.onCreate(savedInstanceState);
         mMapView.onResume();
 
-        initializeDetailsMaps();
-
-        try {
-            MapsInitializer.initialize(getActivity().getApplicationContext());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        mMapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(GoogleMap googleMap) {
-                mMap = googleMap;
-
-                mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-                    @Override
-                    public boolean onMarkerClick(Marker marker) {
-                        marker.showInfoWindow();
-                        return true;
-                    }
-                });
-
-                mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
-                    @Override
-                    public void onMapLoaded() {
-                        mMap.getUiSettings().setScrollGesturesEnabled(false);
-                        mMap.getUiSettings().setZoomGesturesEnabled(false);
-                        if(user.getLatitude().size() > 2){
-                            addMarkers();
-                            drawRoute();
-                            boundsBulider();
-                        }
-                    }
-                });
-            }
-        });
         return view;
     }
 
-    private void initializeDetailsMaps() {
-        AppDatabase db = Room.databaseBuilder(getContext(),
-                AppDatabase.class, "database-name").fallbackToDestructiveMigration().allowMainThreadQueries().build();
-        userDao = db.userDao();
-        loadUser();
-    }
-
-    private void loadUser() {
-        user = new User();
-        user = userDao.getById(userID);
-    }
 
     private void boundsBulider(){
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
@@ -175,4 +134,61 @@ public class DetailsMapActivity extends Fragment {
     }
 
 
+    @Override
+    public void insertUserResponse() {
+
+    }
+
+    @Override
+    public void getUserResponse(User userResponse) {
+        user = userResponse;
+        try {
+            MapsInitializer.initialize(getActivity().getApplicationContext());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        mMapView.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                mMap = googleMap;
+
+                mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        marker.showInfoWindow();
+                        return true;
+                    }
+                });
+
+                mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+                    @Override
+                    public void onMapLoaded() {
+                        mMap.getUiSettings().setScrollGesturesEnabled(false);
+                        mMap.getUiSettings().setZoomGesturesEnabled(false);
+                        if(user.getLatitude().size() > 2){
+                            addMarkers();
+                            drawRoute();
+                            boundsBulider();
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    public void getAllResponse(List<User> usersResponse) {
+
+    }
+
+    @Override
+    public void updateResponse() {
+
+    }
+
+    @Override
+    public void deleteRsponse() {
+
+    }
 }

@@ -4,6 +4,8 @@ import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Database;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
+import android.arch.persistence.room.TypeConverter;
+import android.location.Location;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +35,22 @@ public class User {
 
     @ColumnInfo(name = "distance")
     private double distance = 0;
+
+
+    @ColumnInfo(name = "loc")
+    private ArrayList<Location> locations = new ArrayList<>();
+
+    public ArrayList<Location> getLocations() {
+        return locations;
+    }
+
+    public void setLocations(ArrayList<Location> locations) {
+        this.locations = locations;
+    }
+
+    public void addLocation(Location location) {
+        locations.add(location);
+    }
 
     public void addDistance(double distance) {
         this.distance += distance;
